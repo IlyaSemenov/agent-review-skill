@@ -8,10 +8,11 @@ from adapters import (
 )
 
 
-def test_available_agents_includes_claude_and_codex():
+def test_available_agents_includes_registered_adapters():
     agents = available_agents()
     assert "claude" in agents
     assert "codex" in agents
+    assert "opencode" in agents
 
 
 def test_get_known_agent_returns_protocol_impl():

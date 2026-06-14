@@ -3,8 +3,10 @@ import pytest
 from adapters import AgentInvocation, AgentStreamError, OperationalError
 from agent_review import (
     AGENT_RESPONSE_MARKER,
+    ISSUE_KEYS,
     build_prompt,
     build_repair_prompt,
+    describe_schema,
     looks_like_review_payload,
     normalize_review,
     parse_stdin_payload,
@@ -197,6 +199,20 @@ class TestBuildRepairPrompt:
         out = build_repair_prompt("bad verdict")
         assert "bad verdict" in out
         assert "valid JSON only" in out
+
+
+class TestDescribeSchema:
+    def test_lists_all_issue_fields(self):
+        out = describe_schema()
+        for key in ISSUE_KEYS:
+            assert key in out
+
+    def test_embedded_in_prompt(self):
+        prompt = build_prompt(
+            iteration=1, max_iterations=10, review_input="x", agent_response=None
+        )
+        assert "verdict:" in prompt
+        assert "approval_reason:" in prompt
 
 
 class _StreamFailureAgent:

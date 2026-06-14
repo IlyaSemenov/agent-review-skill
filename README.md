@@ -6,8 +6,9 @@ It runs the reviewer through that agent's own command-line tool, so the reviewer
 
 - Claude Code (`claude`)
 - Codex (`codex`)
+- OpenCode (`opencode`)
 
-You use it from any agent that supports skills (e.g. Claude, Codex, OpenCode, …). It adds `$agent-review`: you point it at a concrete subject, it runs the chosen reviewer on it, and your agent stays responsible for deciding what to accept, what to reject, and whether another round is worth doing.
+You use it from any agent that supports skills (e.g. Claude, Codex, OpenCode, pi.dev, …). It adds `$agent-review`: you point it at a concrete subject, it runs the chosen reviewer on it, and your agent stays responsible for deciding what to accept, what to reject, and whether another round is worth doing.
 
 ## Install
 
@@ -17,7 +18,7 @@ npx skills add -g https://github.com/IlyaSemenov/agent-review-skill
 
 ## Usage
 
-Ask your agent to use `$agent-review`, and say which reviewer to use — `claude` (Claude Code) or `codex` (Codex). The reviewer is required; the skill will ask if you don't name one.
+Ask your agent to use `$agent-review`, and say which of the supported reviewers above to use — just name it, e.g. "review with Codex". The reviewer is required; the skill will ask if you don't name one.
 
 ```text
 Use $agent-review with claude on this plan.

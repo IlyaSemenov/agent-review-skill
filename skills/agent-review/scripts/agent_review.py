@@ -144,7 +144,9 @@ def build_prompt(
             "Review input:",
             review_input.rstrip(),
             "",
-            "Return JSON only.",
+            "Return a single JSON object only — no prose, no markdown fences.",
+            "It must have exactly these keys:",
+            describe_schema(),
             "Choose verdict=approve only when no actionable issues remain.",
             "Choose verdict=needs_changes when the artifact should change.",
             "Choose verdict=discuss when the round is mainly about disagreement or clarification.",
@@ -154,6 +156,27 @@ def build_prompt(
         ]
     )
     return "\n".join(sections) + "\n"
+
+
+def describe_schema() -> str:
+    """Render the response contract as plain text, derived from the constants.
+
+    Agents whose CLI enforces the schema (claude, codex) get this redundantly;
+    agents without schema enforcement (opencode) rely on it to hit the exact
+    field names instead of inventing their own issue shape.
+    """
+    issue_fields = ", ".join(ISSUE_KEYS)
+    return "\n".join(
+        [
+            f"- verdict: one of {', '.join(VERDICTS)}",
+            f"- issues: array of objects, each with exactly: {issue_fields}",
+            f"    - severity: one of {', '.join(SEVERITIES)}",
+            "    - id: a short stable identifier for the issue",
+            "- open_questions: array of strings",
+            "- loop_signal: boolean",
+            "- approval_reason: string",
+        ]
+    )
 
 
 def looks_like_review_payload(value: Any) -> bool:

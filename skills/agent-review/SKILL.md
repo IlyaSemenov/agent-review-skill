@@ -1,7 +1,7 @@
 ---
 name: agent-review
-description: Run a peer CLI agent (Claude Code, Codex, ...) to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
-argument-hint: <claude|codex> [what to review]
+description: Run a peer CLI agent (Claude Code, Codex, OpenCode) to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
+argument-hint: <claude|codex|opencode> [what to review]
 ---
 
 # Agent Review
@@ -10,24 +10,26 @@ argument-hint: <claude|codex> [what to review]
 
 Use a peer CLI agent as a reviewer, not as the authority. The goal is to surface blind spots, challenge weak reasoning, and tighten the artifact under review while keeping you responsible for the final judgment.
 
-The reviewer is pluggable. You must select one with the required `--agent` flag — for example `--agent claude` or `--agent codex`. The workflow below is identical regardless of agent — only the `--agent` value and that agent's authentication requirement change.
+The reviewer is pluggable. You must select one with the required `--agent` flag — for example `--agent claude`, `--agent codex`, or `--agent opencode`. The workflow below is identical regardless of agent — only the `--agent` value and that agent's authentication requirement change.
 
 ## Agents
 
-Available review agents (select with the required `--agent` flag):
+Available review agents, by their `--agent` identifier:
 
-- `claude` — requires an authenticated `claude` on PATH.
-- `codex` — requires an authenticated `codex` on PATH.
+- `claude` (Claude Code) — requires an authenticated `claude` on PATH.
+- `codex` (Codex) — requires an authenticated `codex` on PATH.
+- `opencode` (OpenCode) — requires an authenticated `opencode` on PATH.
 
-Each agent resumes its own session by id and returns structured JSON matching the same review schema. The `session_id` returned in one round must be passed back via `--resume-session-id` on the next round, with the same `--agent`.
+The user names a reviewer in whatever form is natural ("Codex", "Claude Code", "use opencode"); map that to the identifier on the left and pass it as the required `--agent <identifier>` flag.
 
-Optionally pick the agent's model and reasoning level with `--model` and `--reasoning`. Both are optional and independent — pass either, both, or neither. They are forwarded to the agent's CLI as-is (the accepted values differ per agent and are validated by the CLI, surfacing an `operational_error` if invalid). Pass the same values on every round.
+Each agent resumes its own session by id and returns structured JSON matching the same review schema. The `session_id` returned in one round must be passed back via `--resume-session-id` on the next round, with the same `--agent`. Most agents have their CLI enforce the schema; `opencode` does not, so it is asked for the JSON in the prompt and the helper's JSON-repair retry recovers from any drift.
+
+Optionally pick the agent's model and reasoning level with `--model` and `--reasoning`. Both are optional and independent — pass either, both, or neither. They are forwarded to the agent's CLI as-is, so the accepted values follow that CLI (for example `opencode` expects `--model provider/model`, e.g. `openrouter/anthropic/claude-haiku-4.5`); the CLI validates them and surfaces an `operational_error` if invalid. Pass the same values on every round.
 
 ## Workflow
 
-0. Choose the review agent.
-   The first invocation argument selects the agent: `claude` or `codex`. Pass it to the helper as `--agent <name>` on every round.
-   If the agent is missing or ambiguous, stop and ask the user to choose `claude` or `codex`. Do not guess, and do not infer it from the review subject.
+0. Choose the review agent (see the Agents section for the list and how to map a named reviewer to its `--agent` identifier). Pass `--agent` on every round.
+   If no reviewer is named or the choice is ambiguous, stop and ask the user which one. Do not guess, and do not infer it from the review subject.
 1. Identify the review subject.
    In Plan Mode, use the current plan text as the subject.
    Outside Plan Mode, review only a clearly identified subject from context, such as a diff, design note, issue summary, code snippet, or one or more project files.
@@ -67,7 +69,7 @@ EOF
 `--agent` is required on every round (round 1 and all resumes); use `--agent codex` to review with Codex instead.
 
 `$SESSION_ID` is the `session_id` from the previous round's JSON output. Keep using the same `--agent` across rounds — a session id from one agent is not valid for another.
-If your stdin references files outside the current working directory, pass `--add-dir` for each extra readable directory, for example `--add-dir /tmp`.
+If your stdin references files outside the current working directory, pass `--add-dir` for each extra readable directory, for example `--add-dir /tmp`. Not supported by `--agent opencode` (it can only read its working tree), so keep opencode review material in-tree.
 The helper defaults to a 600-second wall-clock budget for the whole round (including any JSON-repair retry). For unusually large reviews, pass `--timeout-seconds` to raise or lower that bound.
 
 If the helper returns `{"kind":"operational_error","reason":"auth_unavailable",...}`, do not assume the user is actually logged out. In sandboxed environments, treat sandbox isolation as the likely cause and rerun the helper command with escalated execution before concluding that the agent's authentication is unavailable.
@@ -128,11 +130,3 @@ The helper prints normalized JSON with this shape:
   - `discuss` means the round is mostly about disagreement or clarification
 - `session_id` is the agent's conversation identifier to pass back via `--resume-session-id` on the next round (with the same `--agent`).
 - `loop_signal` means the agent appears to be repeating a contested point or explicitly says consensus is unlikely soon.
-
-## Resources
-
-### scripts/
-
-- `scripts/agent_review.py`: the agent-agnostic orchestrator. It reads review input from stdin, optionally splits off an `=== AGENT_REVIEW_RESPONSE ===` section on its own line for later rounds, builds the review prompt and the response schema, selects an adapter via `--agent`, runs the agent CLI, normalizes the response, and issues one session-aware JSON-repair retry if needed.
-- `scripts/adapters/`: one module per CLI agent (`claude.py`, `codex.py`), each implementing the `ReviewAgent` protocol in `base.py` (build the command, extract the structured payload and session id, classify failures). `__init__.py` is the registry; add an agent by adding a module and one registry entry.
-- On non-review failures, the helper exits non-zero and prints a structured `operational_error` JSON payload instead of raw stderr.

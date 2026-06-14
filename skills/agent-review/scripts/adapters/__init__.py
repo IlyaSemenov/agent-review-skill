@@ -9,10 +9,11 @@ from __future__ import annotations
 from .base import AgentInvocation, AgentStreamError, OperationalError, ReviewAgent
 from .claude import ClaudeAgent
 from .codex import CodexAgent
+from .opencode import OpencodeAgent
 
 _REGISTRY: dict[str, ReviewAgent] = {
     agent.name: agent
-    for agent in (ClaudeAgent(), CodexAgent())
+    for agent in (ClaudeAgent(), CodexAgent(), OpencodeAgent())
 }
 
 
