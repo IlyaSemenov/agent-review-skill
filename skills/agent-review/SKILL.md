@@ -34,7 +34,8 @@ Optionally pick the agent's model and reasoning level with `--model` and `--reas
    In Plan Mode, use the current plan text as the subject.
    Outside Plan Mode, review only a clearly identified subject from context, such as a diff, design note, issue summary, code snippet, or one or more project files.
    If multiple targets are plausible or the request is underspecified, stop and ask what the agent should review.
-2. Prepare the review input you will pipe to stdin.
+2. Prepare the review input you will pipe to stdin. The reviewer runs in your working tree — describe what to review and let it gather the material; do not pre-materialize what it can read itself.
+   For uncommitted or branch changes, instruct the reviewer to run the diff itself rather than capturing and pasting one. Name the exact command and the focus, e.g. `Review the changes from \`git diff\` — focus on the retry logic in src/reviewer.py` or `Review \`git diff main...HEAD\`, all files`. Paste a captured diff only when the reviewer can't reproduce it from the tree (e.g. a remote PR or patch not checked out locally).
    For project files in the current working directory, prefer path-based review input such as `Review src/auth.py lines 40-110`.
    For non-materialized plans or discussions, either pipe the text directly or, for larger subjects, materialize them to `/tmp/...md` and refer to the path instead.
    For round 2 and later, append your response bundle after an `=== AGENT_REVIEW_RESPONSE ===` marker on its own line in the same stdin payload.
@@ -102,7 +103,7 @@ If the helper returns `{"kind":"operational_error", ...}`, do not start or conti
 
 - This skill cannot bypass permissions by itself. The Python helper only invokes the selected agent CLI. When sandboxed execution cannot access the agent's login, request escalation for the helper command instead of debugging the wrapper first.
 - Use `--resume-session-id` for every round after the first, with the same `--agent`. If the session is lost, start a new review session instead of trying to reconstruct it from pasted prior feedback.
-- Prefer file-path references for repo-backed subjects. Use inline text for short non-file material; for larger plans or discussions, materialize them to a temp file and review the file path instead.
+- Prefer file-path references for repo-backed subjects, and a `git diff` instruction for changes, over pasting raw content. The reviewer can read the tree and run git itself; reserve inline text for short non-file material, and a temp file only for larger plans or discussions that aren't already in the tree.
 - Re-send the full current review input every round even when resuming. The resumed session remembers the conversation, but the current review input is still the authoritative review target.
 - Long-running reviews are normal. Lack of intermediate output is not a failure by itself unless the helper exits or the configured timeout is hit.
 - Keep the review input specific. State what to review and what kind of review you want: missing decisions, correctness risks, scope control, code quality, or implementation gaps.
