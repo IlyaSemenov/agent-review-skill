@@ -106,8 +106,13 @@ If the helper returns `{"kind":"operational_error","reason":"auth_unavailable",.
    Use one line per issue (`<concrete problem summary> — <one-line outcome note>`); do not include the raw `id` in user-facing lines.
    Omit any group that is empty — do not emit a placeholder.
    - **Fixed** — issues you accepted at any point (immediately or after discussion) and applied to the artifact.
-   - **Rejected, agent withdrew** — issues you initially disagreed with and the agent dropped after your rebuttal (they did not resurface in later rounds).
-   - **Unresolved** — issues where the agent still insisted and you still disagreed when the loop ended. These are what the user needs to judge.
+   - **Dropped** — issues you concluded did not need a change: the agent withdrew it after your rebuttal, or you dismissed it as mistaken, or you verified the concern was unfounded (e.g. checked the behavior live). State the basis in the outcome note (`agent withdrew` / `mistaken: …` / `verified: …`).
+   - **Unresolved** — issues where a genuine disagreement still stood when the loop ended: the agent insisted and you were not convinced, and the point was not settled by a check. These are what the user needs to judge.
+
+   If the agent raised `open_questions`, end the report with an **Open questions** group, one line each.
+   Unlike `issues`, these carry no proposed change, so the user answers or decides them rather than judging a dispute (which is what **Unresolved** is — a disagreement over a specific recommendation).
+   Drop any you already answered during the loop (state the answer inline instead of listing the bare question); list only those still genuinely open for the user.
+   Omit the group if none remain.
 
    Then add a final block telling the user how to reopen the reviewer's session.
    Copy the last round's `resume_command` and `resume_cwd` values verbatim; do not retype or reconstruct them.
