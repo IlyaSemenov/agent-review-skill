@@ -109,6 +109,17 @@ If the helper returns `{"kind":"operational_error","reason":"auth_unavailable",.
    - **Rejected, agent withdrew** — issues you initially disagreed with and the agent dropped after your rebuttal (they did not resurface in later rounds).
    - **Unresolved** — issues where the agent still insisted and you still disagreed when the loop ended. These are what the user needs to judge.
 
+   Then add a final block telling the user how to reopen the reviewer's session.
+   Copy the last round's `resume_command` and `resume_cwd` values verbatim; do not retype or reconstruct them.
+   Put `resume_command` in a fenced code block, and on the line above it state that it must be run from `resume_cwd`.
+   Include this block even when the verdict is `approve`.
+   Example:
+
+   To reopen the reviewer's session, run from `/abs/path/to/repo`:
+   ```
+   claude --resume b51c0aeb-6b77-4675-b4e2-55e5582f44bb
+   ```
+
 If the helper returns `{"kind":"operational_error", ...}`, do not start or continue iterations. Report that review was not possible, show the reason and message, and stop.
 
 ## Guidance
@@ -129,6 +140,8 @@ The helper prints normalized JSON with this shape:
 ```json
 {
   "session_id": "...",
+  "resume_command": "...",
+  "resume_cwd": "...",
   "verdict": "approve",
   "issues": [],
   "open_questions": [],
@@ -142,4 +155,5 @@ The helper prints normalized JSON with this shape:
   - `needs_changes` means the agent sees concrete changes to make
   - `discuss` means the round is mostly about disagreement or clarification
 - `session_id` is the agent's conversation identifier to pass back via `--resume-session-id` on the next round (with the same `--agent`).
+- `resume_command` is the shell command the user can run to reopen the reviewer's session themselves; `resume_cwd` is the directory it must be run from (CLIs key sessions to that cwd).
 - `loop_signal` means the agent appears to be repeating a contested point or explicitly says consensus is unlikely soon.

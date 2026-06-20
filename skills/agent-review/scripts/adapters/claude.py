@@ -66,6 +66,12 @@ class ClaudeAgent:
             return value.strip()
         return None
 
+    def resume_command(self, session_id: str) -> str:
+        # The review runs headless (`claude -p`), so this session does not show
+        # up in the interactive `claude --resume` picker; resume it by id from
+        # the repo directory the review ran in.
+        return f"claude --resume {session_id}"
+
     def classify_failure(
         self, completed: subprocess.CompletedProcess[str]
     ) -> OperationalError:

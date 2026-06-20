@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from adapters import AgentInvocation, AgentStreamError, OperationalError
@@ -233,8 +235,58 @@ class _StreamFailureAgent:
         self.payload_calls += 1
         raise AgentStreamError("401 Unauthorized")
 
+    def resume_command(self, session_id):
+        return f"fake resume {session_id}"
+
     def classify_failure(self, completed):
         return OperationalError("auth_unavailable", "401 Unauthorized")
+
+
+class _SuccessAgent:
+    """Fake adapter that returns a valid payload and a resumable session id."""
+
+    name = "fake"
+
+    def build_command(self, *, schema, resume_session_id, add_dirs, model, reasoning):
+        return AgentInvocation(["true"])
+
+    def extract_session_id(self, stdout):
+        return "sid-42"
+
+    def extract_payload(self, stdout):
+        return _valid_payload()
+
+    def resume_command(self, session_id):
+        return f"fake resume {session_id}"
+
+    def classify_failure(self, completed):
+        return OperationalError("agent_cli_failed", "unused")
+
+
+class TestRequestReviewResumeCommand:
+    def test_session_id_and_resume_command_surfaced(self, monkeypatch):
+        agent = _SuccessAgent()
+
+        def fake_run(argv, **kwargs):
+            import subprocess
+
+            return subprocess.CompletedProcess(
+                args=argv, returncode=0, stdout="ignored", stderr=""
+            )
+
+        monkeypatch.setattr("agent_review.subprocess.run", fake_run)
+
+        result = request_review(
+            agent,
+            prompt="p",
+            timeout_seconds=30,
+            resume_session_id=None,
+            add_dirs=[],
+        )
+
+        assert result["session_id"] == "sid-42"
+        assert result["resume_command"] == "fake resume sid-42"
+        assert result["resume_cwd"] == os.getcwd()
 
 
 class TestRequestReviewStreamFailure:

@@ -44,6 +44,11 @@ Each adapter implements (see `base.py`):
   failure and may do **one** JSON-repair retry). Raise `AgentStreamError` if the
   CLI reported a failure *in its output stream* (see gotcha below).
 - `extract_session_id(stdout) -> str | None` — the resumable id.
+- `resume_command(session_id) -> str` — the shell command a user runs to reopen
+  the session by hand. This is the CLI's *interactive* resume form (e.g. `codex
+  resume <id>`, not the `codex exec resume` the core uses), so it differs from
+  the resume argv `build_command` builds. The core surfaces it (with the review's
+  cwd) in the output JSON.
 - `classify_failure(completed) -> OperationalError` — map a failed run onto a
   stable `reason` (`auth_unavailable` / `agent_cli_failed` / `invalid_input`).
 

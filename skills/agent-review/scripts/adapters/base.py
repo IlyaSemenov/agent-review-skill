@@ -84,6 +84,15 @@ class ReviewAgent(Protocol):
         """Return the resumable session id from raw stdout, if present."""
         ...
 
+    def resume_command(self, session_id: str) -> str:
+        """Return the shell command a user runs to reopen this session.
+
+        The orchestrator surfaces this to the user; the resume syntax differs
+        per CLI, so it lives here next to `build_command`. Run from the same
+        working directory the review ran in (CLIs key sessions to cwd).
+        """
+        ...
+
     def classify_failure(
         self, completed: subprocess.CompletedProcess[str]
     ) -> OperationalError:

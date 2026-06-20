@@ -176,6 +176,11 @@ class TestExtractSessionId:
         assert CodexAgent().extract_session_id("") is None
 
 
+class TestResumeCommand:
+    def test_command(self):
+        assert CodexAgent().resume_command("abc") == "codex resume abc"
+
+
 class TestClassifyFailure:
     def test_uses_turn_failed_message(self):
         err = CodexAgent().classify_failure(_completed(stdout=API_ERROR_JSONL))

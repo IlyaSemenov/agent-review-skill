@@ -102,6 +102,9 @@ class OpencodeAgent:
                 return value.strip()
         return None
 
+    def resume_command(self, session_id: str) -> str:
+        return f"opencode --session {session_id}"
+
     def classify_failure(
         self, completed: subprocess.CompletedProcess[str]
     ) -> OperationalError:

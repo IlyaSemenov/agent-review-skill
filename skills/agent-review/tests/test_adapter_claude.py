@@ -107,6 +107,11 @@ class TestExtractSessionId:
         assert ClaudeAgent().extract_session_id("not json") is None
 
 
+class TestResumeCommand:
+    def test_command(self):
+        assert ClaudeAgent().resume_command("abc") == "claude --resume abc"
+
+
 class TestClassifyFailure:
     def test_auth_failure(self):
         err = ClaudeAgent().classify_failure(

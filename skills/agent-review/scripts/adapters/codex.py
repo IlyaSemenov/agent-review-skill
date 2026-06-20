@@ -118,6 +118,11 @@ class CodexAgent:
                     return value.strip()
         return None
 
+    def resume_command(self, session_id: str) -> str:
+        # `codex exec resume` is the non-interactive form the orchestrator uses;
+        # for a user reopening the session by hand it's the interactive TUI.
+        return f"codex resume {session_id}"
+
     def classify_failure(
         self, completed: subprocess.CompletedProcess[str]
     ) -> OperationalError:

@@ -201,6 +201,11 @@ class TestExtractSessionId:
         assert OpencodeAgent().extract_session_id("") is None
 
 
+class TestResumeCommand:
+    def test_command(self):
+        assert OpencodeAgent().resume_command("abc") == "opencode --session abc"
+
+
 class TestClassifyFailure:
     def test_stderr_generic(self):
         err = OpencodeAgent().classify_failure(_completed(stderr="boom"))

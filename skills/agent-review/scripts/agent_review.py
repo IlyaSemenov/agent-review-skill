@@ -321,6 +321,10 @@ def request_review(
             review = normalize_review(payload)
             if followup_session_id:
                 review["session_id"] = followup_session_id
+                review["resume_command"] = agent.resume_command(followup_session_id)
+                # CLIs key sessions to the cwd the review ran in; surface it so
+                # the user can reopen the session from the right directory.
+                review["resume_cwd"] = os.getcwd()
             return review
         except AgentStreamError:
             # The agent reported a failure in its output (and may have exited 0).
