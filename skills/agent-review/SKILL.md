@@ -26,6 +26,15 @@ Each agent resumes its own session by id and returns structured JSON matching th
 
 Optionally pick the agent's model and reasoning level with `--model` and `--reasoning`. Both are optional and independent — pass either, both, or neither. They are forwarded to the agent's CLI as-is, so the accepted values follow that CLI (for example `opencode` expects `--model provider/model`, e.g. `openrouter/anthropic/claude-haiku-4.5`); the CLI validates them and surfaces an `operational_error` if invalid. Pass the same values on every round.
 
+## Host environment
+
+How the helper must be launched depends on the host agent running this skill, not just on the reviewer. Each host has its own doc next to this file; read the one that matches you **before** running the helper:
+
+- If you are **Claude Code**, read [claude-code.md](claude-code.md).
+- If you are **Codex**, read [codex.md](codex.md).
+
+If your host has no doc here, run the helper as written and treat any `operational_error` per the note in the Workflow.
+
 ## Workflow
 
 0. Choose the review agent (see the Agents section for the list and how to map a named reviewer to its `--agent` identifier). Pass `--agent` on every round.
@@ -130,7 +139,6 @@ If the helper returns `{"kind":"operational_error", ...}`, do not start or conti
 ## Guidance
 
 - This skill cannot bypass permissions by itself. The Python helper only invokes the selected agent CLI. When the environment breaks the helper (see the false-failure note above), fix how the helper is launched instead of debugging the wrapper first.
-- Host-agent-specific guidance lives next to this file. If you are Claude Code, read [claude-code.md](claude-code.md) for how to run the helper under this harness (foreground vs background, escalation) — it prevents the false-timeout failure mode.
 - Use `--resume-session-id` for every round after the first, with the same `--agent`. If the session is lost, start a new review session instead of trying to reconstruct it from pasted prior feedback.
 - Prefer file-path references for repo-backed subjects, and a `git diff` instruction for changes, over pasting raw content. The reviewer can read the tree and run git itself; reserve inline text for short non-file material, and a temp file only for larger plans or discussions that aren't already in the tree.
 - Re-send the full current review input every round even when resuming. The resumed session remembers the conversation, but the current review input is still the authoritative review target.
