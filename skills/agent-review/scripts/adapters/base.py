@@ -1,4 +1,4 @@
-"""Shared types and the adapter protocol for CLI review agents.
+"""Shared types and the protocol for reviewer CLI adapters.
 
 A review adapter encapsulates everything that is specific to one CLI agent:
 how to build its command line, how to pull the structured review payload and
@@ -45,7 +45,7 @@ class AgentStreamError(Exception):
 
 @runtime_checkable
 class ReviewAgent(Protocol):
-    """Protocol every CLI review adapter implements.
+    """Protocol implemented by every reviewer CLI adapter.
 
     `build_command` is split into round-1 vs resume because some CLIs accept a
     different flag set when resuming (codex, for instance, rejects --sandbox on

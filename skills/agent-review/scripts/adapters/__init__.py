@@ -1,4 +1,4 @@
-"""Registry of CLI review adapters.
+"""Registry of reviewer CLI adapters.
 
 To add an agent: implement the `ReviewAgent` protocol in a new module and add
 one entry to `_REGISTRY`. The orchestrator selects an adapter by `--agent`.

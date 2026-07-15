@@ -1,6 +1,6 @@
 # Core development
 
-This document defines the development contract for `scripts/agent_review.py`, prompt construction, stdin handling, the review schema, normalization, retries, timeout behavior, and the helper's output contract.
+This document covers `scripts/agent_review.py`, shared prompts, stdin handling, the review schema, normalization, retries, timeouts, and helper output.
 
 ## Ownership
 
@@ -19,13 +19,13 @@ Include the reviewer role, review rules, initial subject, response-field contrac
 Build delta-only prompts for round 2 and later.
 Include only the current round number, the host response to prior feedback, any new review scope, and per-round values that changed.
 Do not repeat the reviewer role, general review rules, response schema, or unchanged output guidance.
-Apply the same rule to resumed CLI sessions and manually relayed sessions while the reviewer conversation retains the review subject.
-Automatic delivery verifies continuity through the resumed session id.
-Manual delivery relies on the relay and must recover with a new full prompt only when the reviewer loses the subject itself, not merely the JSON format.
+Apply the same rule to resumed CLI sessions and user-relayed sessions while the reviewer conversation retains the review subject.
+Review via CLI verifies continuity through the resumed session id.
+Review via user relay must recover with a new full prompt only when the reviewer loses the subject itself, not merely the JSON format.
 Keep the original issue history and total-round limit across that recovery.
 
 Keep `manual_review_token` out of the shared `RESPONSE_SCHEMA`.
-It is manual transport metadata and is the only output-field reminder that changes on each manual follow-up.
+It is user-relay transport metadata and is the only output-field reminder that changes on each user-relayed follow-up.
 
 ## Stdin contract
 
@@ -36,9 +36,9 @@ Keep the internal name `HOST_RESPONSE_MARKER` so the direction of that response 
 
 Reject an empty payload.
 Reject a response bundle in round 1.
-Require `--resume-session-id` for CLI rounds after round 1, but not for manual delivery.
+Require `--resume-session-id` for CLI rounds after round 1, but not with `--agent manual`.
 
-## Automatic delivery
+## Review via CLI
 
 Select an adapter through the registry and invoke it with `subprocess.run(input=prompt)`.
 Pass model and reasoning values through unchanged on every round.
@@ -48,7 +48,7 @@ Treat `AgentStreamError` as an operational failure rather than malformed JSON.
 Use `classify_failure()` for both nonzero exit codes and failures reported in an exit-zero event stream.
 Surface the adapter's interactive resume command and the review cwd with the normalized review.
 
-## Manual delivery
+## Review via user relay
 
 Keep the `--agent manual` branch isolated from adapter lookup and subprocess invocation.
 Emit the constructed reviewer prompt as plain text.

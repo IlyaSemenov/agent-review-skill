@@ -1,6 +1,6 @@
 # Adapter development
 
-This document defines the development contract for reviewer CLI adapters, registry entries, and verified CLI behavior.
+This document covers reviewer CLI adapters, registry entries, and verified CLI behavior.
 
 ## Protocol
 

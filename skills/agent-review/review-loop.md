@@ -1,6 +1,6 @@
 # Review loop
 
-This document defines the review loop shared by automatic and manual delivery.
+This document defines the review loop shared by both review paths.
 
 ## Judge each round
 
@@ -50,6 +50,6 @@ Do not expose raw issue ids.
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
 Omit questions already answered during the loop.
 
-For automatic delivery, append the last output's `resume_command` and state that it must be run from `resume_cwd`.
+After review via CLI, append the last output's `resume_command` and state that it must be run from `resume_cwd`.
 Put the command in a fenced code block and include it even after approval.
-For manual delivery, omit the resume block.
+After review via user relay, omit the resume block.

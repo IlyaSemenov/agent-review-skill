@@ -1,6 +1,6 @@
-# Automatic delivery
+# Review via CLI
 
-This document defines automatic delivery through a supported reviewer CLI.
+This path runs a supported reviewer through its CLI.
 
 ## Configure the reviewer
 

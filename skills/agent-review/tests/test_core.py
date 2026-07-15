@@ -108,7 +108,7 @@ class TestBuildPrompt:
         assert "You are reviewing" not in prompt
         assert "verdict:" not in prompt
 
-    def test_manual_delivery_requests_quadruple_fenced_json(self):
+    def test_user_relay_requests_quadruple_fenced_json(self):
         prompt = build_prompt(
             iteration=1,
             max_iterations=10,
@@ -121,7 +121,7 @@ class TestBuildPrompt:
         assert "Do not write anything outside that fence" in prompt
         assert "no markdown fences" not in prompt
 
-    def test_manual_followup_contains_only_round_delta_and_token(self):
+    def test_user_relay_followup_contains_only_round_delta_and_token(self):
         prompt = build_prompt(
             iteration=2,
             max_iterations=10,
@@ -138,7 +138,7 @@ class TestBuildPrompt:
 
 
 class TestMainInputValidation:
-    def test_manual_round_emits_prompt_without_loading_an_adapter(
+    def test_user_relay_round_emits_prompt_without_loading_an_adapter(
         self, monkeypatch, capsys
     ):
         monkeypatch.setattr(
@@ -156,12 +156,12 @@ class TestMainInputValidation:
         )
         monkeypatch.setattr(
             "agent_review.get_agent",
-            lambda _name: pytest.fail("manual mode must not load an adapter"),
+            lambda _name: pytest.fail("user relay must not load an adapter"),
         )
         monkeypatch.setattr(
             "agent_review.request_review",
             lambda *args, **kwargs: pytest.fail(
-                "manual mode must not invoke a reviewer"
+                "user relay must not invoke a reviewer"
             ),
         )
         monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "a1b2c3d4")
@@ -173,7 +173,7 @@ class TestMainInputValidation:
         assert "inside one quadruple-backtick code fence" in output
         assert "manual_review_token: exactly r1-a1b2c3d4" in output
 
-    def test_manual_later_round_does_not_require_session_id(
+    def test_user_relay_later_round_does_not_require_session_id(
         self, monkeypatch, capsys
     ):
         monkeypatch.setattr(
@@ -211,7 +211,7 @@ class TestMainInputValidation:
             ("--timeout-seconds", "30"),
         ],
     )
-    def test_manual_rejects_cli_only_options(
+    def test_user_relay_rejects_cli_only_options(
         self, monkeypatch, capsys, option, value
     ):
         monkeypatch.setattr(

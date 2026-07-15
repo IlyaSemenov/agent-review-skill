@@ -4,8 +4,8 @@ Run a structured peer review of a concrete artifact using a pluggable CLI agent.
 
 The orchestration here is agent-agnostic: it parses stdin, builds the review and
 repair prompts, owns the response schema and normalization, and drives the retry
-loop. Automatic delivery emits the user-facing JSON contract through an adapter
-under `adapters/`; manual delivery emits the prompt without invoking an adapter.
+loop. Review via CLI emits the user-facing JSON contract through an adapter
+under `adapters/`; review via user relay emits the prompt without invoking one.
 """
 
 from __future__ import annotations
@@ -388,7 +388,7 @@ def request_review(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a structured peer review with automatic or manual delivery."
+        description="Run a structured peer review through a reviewer CLI or user relay."
     )
     parser.add_argument(
         "--agent",
