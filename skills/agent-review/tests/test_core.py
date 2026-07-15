@@ -5,7 +5,7 @@ import pytest
 
 from adapters import AgentInvocation, AgentStreamError, OperationalError
 from agent_review import (
-    AGENT_RESPONSE_MARKER,
+    HOST_RESPONSE_MARKER,
     ISSUE_KEYS,
     build_prompt,
     build_repair_prompt,
@@ -28,82 +28,213 @@ class TestParseStdinPayload:
             parse_stdin_payload("   \n\n  ")
 
     def test_plain_input_no_marker(self):
-        review_input, agent_response = parse_stdin_payload("Review src/auth.py lines 40-110")
+        review_input, host_response = parse_stdin_payload("Review src/auth.py lines 40-110")
         assert review_input == "Review src/auth.py lines 40-110"
-        assert agent_response is None
+        assert host_response is None
 
     def test_marker_on_own_line(self):
-        payload = f"Review src/auth.py\n{AGENT_RESPONSE_MARKER}\nAgent accepts point 1."
-        review_input, agent_response = parse_stdin_payload(payload)
+        payload = f"Review src/auth.py\n{HOST_RESPONSE_MARKER}\nHost accepts point 1."
+        review_input, host_response = parse_stdin_payload(payload)
         assert review_input == "Review src/auth.py"
-        assert agent_response == "Agent accepts point 1."
+        assert host_response == "Host accepts point 1."
 
     def test_marker_not_on_own_line_is_ignored(self):
-        payload = f"Reviewing a doc that mentions {AGENT_RESPONSE_MARKER} inline"
-        review_input, agent_response = parse_stdin_payload(payload)
+        payload = f"Reviewing a doc that mentions {HOST_RESPONSE_MARKER} inline"
+        review_input, host_response = parse_stdin_payload(payload)
         assert review_input == payload
-        assert agent_response is None
+        assert host_response is None
 
     def test_marker_with_empty_input_is_response_only_resume(self):
-        payload = f"{AGENT_RESPONSE_MARKER}\nAgent response"
-        review_input, agent_response = parse_stdin_payload(payload)
+        payload = f"{HOST_RESPONSE_MARKER}\nHost response"
+        review_input, host_response = parse_stdin_payload(payload)
         assert review_input is None
-        assert agent_response == "Agent response"
+        assert host_response == "Host response"
 
     def test_marker_with_empty_response_collapses_to_none(self):
-        payload = f"Review\n{AGENT_RESPONSE_MARKER}\n"
-        review_input, agent_response = parse_stdin_payload(payload)
+        payload = f"Review\n{HOST_RESPONSE_MARKER}\n"
+        review_input, host_response = parse_stdin_payload(payload)
         assert review_input == "Review"
-        assert agent_response is None
+        assert host_response is None
 
     def test_marker_preserves_multiline_sections(self):
         payload = (
             "Review src/auth.py\nAlso review docs/plan.md\n"
-            f"{AGENT_RESPONSE_MARKER}\n"
+            f"{HOST_RESPONSE_MARKER}\n"
             "Accepted: r1\nRejected: r2 — bad premise"
         )
-        review_input, agent_response = parse_stdin_payload(payload)
+        review_input, host_response = parse_stdin_payload(payload)
         assert review_input == "Review src/auth.py\nAlso review docs/plan.md"
-        assert agent_response == "Accepted: r1\nRejected: r2 — bad premise"
+        assert host_response == "Accepted: r1\nRejected: r2 — bad premise"
 
 
 class TestBuildPrompt:
-    def test_first_round_has_no_agent_response_block(self):
+    def test_first_round_has_no_host_response_block(self):
         prompt = build_prompt(
             iteration=1,
             max_iterations=10,
             review_input="Review X",
-            agent_response=None,
+            host_response=None,
         )
         assert "Round: 1 of 10" in prompt
         assert "Review X" in prompt
         assert "Primary agent response" not in prompt
+        assert "manual_review_token" not in prompt
 
-    def test_later_round_includes_agent_response(self):
+    def test_later_round_includes_host_response(self):
         prompt = build_prompt(
             iteration=3,
             max_iterations=10,
             review_input="Review X",
-            agent_response="Agent accepted r1.",
+            host_response="Host accepted r1.",
         )
         assert "Round: 3 of 10" in prompt
         assert "Primary agent response" in prompt
-        assert "Agent accepted r1." in prompt
+        assert "Host accepted r1." in prompt
+        assert "New review input:" in prompt
+        assert "You are reviewing" not in prompt
+        assert "It must have exactly these keys" not in prompt
 
     def test_later_round_can_continue_without_new_review_input(self):
         prompt = build_prompt(
             iteration=3,
             max_iterations=10,
             review_input=None,
-            agent_response="Agent accepted r1.",
+            host_response="Host accepted r1.",
         )
-        assert "No new review input was supplied this round." in prompt
-        assert "judge whether that response resolves your prior issues" in prompt
+        assert prompt.startswith("Round: 3 of 10\n")
+        assert "No new review input" not in prompt
         assert "response marker" not in prompt
         assert "Review input:" not in prompt
+        assert "You are reviewing" not in prompt
+        assert "verdict:" not in prompt
+
+    def test_manual_delivery_requests_quadruple_fenced_json(self):
+        prompt = build_prompt(
+            iteration=1,
+            max_iterations=10,
+            review_input="Review X",
+            host_response=None,
+            manual_round_token="r1-a1b2c3d4",
+        )
+        assert "inside one quadruple-backtick code fence" in prompt
+        assert "manual_review_token: exactly r1-a1b2c3d4" in prompt
+        assert "Do not write anything outside that fence" in prompt
+        assert "no markdown fences" not in prompt
+
+    def test_manual_followup_contains_only_round_delta_and_token(self):
+        prompt = build_prompt(
+            iteration=2,
+            max_iterations=10,
+            review_input=None,
+            host_response="Host fixed r1.",
+            manual_round_token="r2-e5f6a7b8",
+        )
+        assert prompt.startswith("Round: 2 of 10\n")
+        assert "Host fixed r1." in prompt
+        assert "manual_review_token to exactly r2-e5f6a7b8" in prompt
+        assert "You are reviewing" not in prompt
+        assert "quadruple-backtick" not in prompt
+        assert "verdict:" not in prompt
 
 
 class TestMainInputValidation:
+    def test_manual_round_emits_prompt_without_loading_an_adapter(
+        self, monkeypatch, capsys
+    ):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "agent_review.py",
+                "--agent",
+                "manual",
+                "--iteration",
+                "1",
+                "--max-iterations",
+                "10",
+            ],
+        )
+        monkeypatch.setattr(
+            "agent_review.get_agent",
+            lambda _name: pytest.fail("manual mode must not load an adapter"),
+        )
+        monkeypatch.setattr(
+            "agent_review.request_review",
+            lambda *args, **kwargs: pytest.fail(
+                "manual mode must not invoke a reviewer"
+            ),
+        )
+        monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "a1b2c3d4")
+        monkeypatch.setattr("sys.stdin.read", lambda: "Review src/auth.py")
+
+        assert main() == 0
+        output = capsys.readouterr().out
+        assert "Review src/auth.py" in output
+        assert "inside one quadruple-backtick code fence" in output
+        assert "manual_review_token: exactly r1-a1b2c3d4" in output
+
+    def test_manual_later_round_does_not_require_session_id(
+        self, monkeypatch, capsys
+    ):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "agent_review.py",
+                "--agent",
+                "manual",
+                "--iteration",
+                "2",
+                "--max-iterations",
+                "10",
+            ],
+        )
+        monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "e5f6a7b8")
+        monkeypatch.setattr("sys.stdin.read", lambda: "Rejected: r1 is mistaken.")
+
+        assert main() == 0
+        output = capsys.readouterr().out
+        assert "Primary agent response to your previous feedback:" in output
+        assert "Rejected: r1 is mistaken." in output
+        assert "No new review input" not in output
+        assert "manual_review_token to exactly r2-e5f6a7b8" in output
+        assert "You are reviewing" not in output
+        assert "verdict:" not in output
+
+    @pytest.mark.parametrize(
+        ("option", "value"),
+        [
+            ("--resume-session-id", "sid-1"),
+            ("--add-dir", "/tmp"),
+            ("--model", "model-name"),
+            ("--reasoning", "high"),
+            ("--timeout-seconds", "30"),
+        ],
+    )
+    def test_manual_rejects_cli_only_options(
+        self, monkeypatch, capsys, option, value
+    ):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "agent_review.py",
+                "--agent",
+                "manual",
+                "--iteration",
+                "1",
+                "--max-iterations",
+                "10",
+                option,
+                value,
+            ],
+        )
+
+        assert main() == 1
+        output = capsys.readouterr().out
+        assert '"reason": "invalid_input"' in output
+        assert option in output
+
     def test_later_round_with_marker_splits_new_input_and_response(
         self, monkeypatch
     ):
@@ -119,6 +250,7 @@ class TestMainInputValidation:
             reasoning=None,
         ):
             captured["prompt"] = prompt
+            captured["timeout_seconds"] = timeout_seconds
             return {
                 **_valid_payload(),
                 "session_id": "sid-1",
@@ -147,16 +279,18 @@ class TestMainInputValidation:
             "sys.stdin.read",
             lambda: (
                 "Now also review src/db.py.\n"
-                f"{AGENT_RESPONSE_MARKER}\n"
+                f"{HOST_RESPONSE_MARKER}\n"
                 "Accepted: fixed r1."
             ),
         )
 
         assert main() == 0
-        assert "Review input:" in captured["prompt"]
+        assert "New review input:" in captured["prompt"]
         assert "Now also review src/db.py." in captured["prompt"]
         assert "Primary agent response to your previous feedback:" in captured["prompt"]
         assert "Accepted: fixed r1." in captured["prompt"]
+        assert "You are reviewing" not in captured["prompt"]
+        assert "verdict:" not in captured["prompt"]
 
     def test_later_round_without_marker_treats_stdin_as_response(
         self, monkeypatch
@@ -173,6 +307,7 @@ class TestMainInputValidation:
             reasoning=None,
         ):
             captured["prompt"] = prompt
+            captured["timeout_seconds"] = timeout_seconds
             return {
                 **_valid_payload(),
                 "session_id": "sid-1",
@@ -203,6 +338,9 @@ class TestMainInputValidation:
         assert "Primary agent response to your previous feedback:" in captured["prompt"]
         assert "Accepted: fixed r1." in captured["prompt"]
         assert "Review input:" not in captured["prompt"]
+        assert "You are reviewing" not in captured["prompt"]
+        assert "verdict:" not in captured["prompt"]
+        assert captured["timeout_seconds"] == 600
 
     def test_iteration_one_rejects_response_only_payload(
         self, monkeypatch, capsys
@@ -221,7 +359,7 @@ class TestMainInputValidation:
             ],
         )
         monkeypatch.setattr("agent_review.get_agent", lambda _name: _SuccessAgent())
-        monkeypatch.setattr("sys.stdin.read", lambda: f"{AGENT_RESPONSE_MARKER}\nAccepted.")
+        monkeypatch.setattr("sys.stdin.read", lambda: f"{HOST_RESPONSE_MARKER}\nAccepted.")
 
         exit_code = main()
 
@@ -248,7 +386,7 @@ class TestMainInputValidation:
         monkeypatch.setattr("agent_review.get_agent", lambda _name: _SuccessAgent())
         monkeypatch.setattr(
             "sys.stdin.read",
-            lambda: f"Review src/auth.py\n{AGENT_RESPONSE_MARKER}\nAccepted.",
+            lambda: f"Review src/auth.py\n{HOST_RESPONSE_MARKER}\nAccepted.",
         )
 
         exit_code = main()
@@ -383,7 +521,7 @@ class TestDescribeSchema:
 
     def test_embedded_in_prompt(self):
         prompt = build_prompt(
-            iteration=1, max_iterations=10, review_input="x", agent_response=None
+            iteration=1, max_iterations=10, review_input="x", host_response=None
         )
         assert "verdict:" in prompt
         assert "approval_reason:" in prompt

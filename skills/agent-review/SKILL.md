@@ -1,18 +1,26 @@
 ---
 name: agent-review
-description: Run a peer CLI agent (Claude Code, Codex, OpenCode) to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
-argument-hint: <claude|codex|opencode> [what to review]
+description: Run a peer CLI agent (Claude Code, Codex, OpenCode), or prepare a manual reviewer handoff, to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
+argument-hint: <claude|codex|opencode|manual> [what to review]
 ---
 
 # Agent Review
 
-## Overview
+Use a peer agent as a reviewer, not as the authority.
+Keep responsibility for deciding which feedback to accept, reject, or discuss.
 
-Use a peer CLI agent as a reviewer, not as the authority. The goal is to surface blind spots, challenge weak reasoning, and tighten the artifact under review while keeping you responsible for the final judgment.
+## Choose the runtime branch
 
-The reviewer is pluggable. You must select one with the required `--agent` flag — for example `--agent claude`, `--agent codex`, or `--agent opencode`. The workflow is identical regardless of agent.
+Act as the host agent running the skill.
+The external reviewer follows the generated review prompt and does not read this skill.
 
-## Agents
+- If the user explicitly requests manual relay, read [Manual delivery](manual.md) and [Review loop](review-loop.md).
+- Otherwise, read [Automatic delivery](automatic.md) and [Review loop](review-loop.md).
+
+Do not read the unselected delivery document.
+If neither manual delivery nor a CLI reviewer is named, or the choice is ambiguous, ask the user instead of guessing.
+
+## CLI reviewers
 
 Available review agents, by their `--agent` identifier:
 
@@ -20,152 +28,16 @@ Available review agents, by their `--agent` identifier:
 - `codex` (Codex) — requires an authenticated `codex` on PATH.
 - `opencode` (OpenCode) — requires an authenticated `opencode` on PATH.
 
-The user names a reviewer in whatever form is natural ("Codex", "Claude Code", "use opencode"); map that to the identifier on the left and pass it as the required `--agent <identifier>` flag.
+Map a naturally named reviewer to the identifier on the left.
+Pass the selected identifier, or `manual`, through the required `--agent` flag on every round.
 
-Each agent resumes its own session by id and returns structured JSON matching the same review schema. The `session_id` returned in one round must be passed back via `--resume-session-id` on the next round, with the same `--agent`. Most agents have their CLI enforce the schema; `opencode` does not, so it is asked for the JSON in the prompt and the helper's JSON-repair retry recovers from any drift.
+## Identify the review subject
 
-Optionally pick the agent's model and reasoning level with `--model` and `--reasoning`. Both are optional and independent — pass either, both, or neither. They are forwarded to the agent's CLI as-is, so the accepted values follow that CLI (for example `opencode` expects `--model provider/model`, e.g. `openrouter/anthropic/claude-haiku-4.5`); the CLI validates them and surfaces an `operational_error` if invalid. Pass the same values on every round.
+Review only a clearly identified subject from context, such as a diff, plan, design note, issue summary, code snippet, or project files.
+In Plan Mode, use the current plan text as the subject.
+If multiple targets are plausible or the request is underspecified, ask what to review.
 
-## Host environment
-
-How the helper must be launched depends on the host agent running this skill, not just on the reviewer. Each host has its own doc next to this file; read the one that matches you **before** running the helper:
-
-- If you are **Claude Code**, read [claude-code.md](claude-code.md).
-- If you are **Codex**, read [codex.md](codex.md).
-
-If your host has no doc here, run the helper as written and treat any `operational_error` per the note in the Workflow.
-
-## Workflow
-
-0. Choose the review agent (see the Agents section for the list and how to map a named reviewer to its `--agent` identifier). Pass `--agent` on every round.
-   If no reviewer is named or the choice is ambiguous, stop and ask the user which one. Do not guess, and do not infer it from the review subject.
-1. Identify the review subject.
-   In Plan Mode, use the current plan text as the subject.
-   Outside Plan Mode, review only a clearly identified subject from context, such as a diff, design note, issue summary, code snippet, or one or more project files.
-   If multiple targets are plausible or the request is underspecified, stop and ask what the agent should review.
-2. Prepare the stdin payload for this round.
-   Round 1 stdin is the review subject.
-   The reviewer runs in your working tree — describe what to review and let it gather the material; do not pre-materialize what it can read itself.
-   Keep the subject specific: state both what to review and what kind of review you want — missing decisions, correctness risks, scope control, code quality, or implementation gaps.
-   For uncommitted or branch changes, instruct the reviewer to run the diff itself rather than capturing and pasting one. Name the exact command and the focus, e.g. `Review the changes from \`git diff\` — focus on the retry logic in src/reviewer.py` or `Review \`git diff main...HEAD\`, all files`. Paste a captured diff only when the reviewer can't reproduce it from the tree (e.g. a remote PR or patch not checked out locally).
-   For project files in the current working directory, prefer path-based review input such as `Review src/auth.py lines 40-110`.
-   For non-materialized plans or discussions, either pipe the text directly or, for larger subjects, materialize them to `/tmp/...md` and refer to the path instead.
-   Round 2+ stdin is normally only your response bundle; the resumed session already has the prior subject and discussion.
-3. Run the helper script.
-   Resolve the absolute path to this skill directory (the directory containing this `SKILL.md`) and call it `SKILL_DIR`.
-   Keep your shell working directory in the repository being reviewed; do not `cd` into the skill directory.
-   Invoke the helper by absolute path from `SKILL_DIR`, not as a path relative to the reviewed repository.
-
-Round 1 — review subject:
-
-```bash
-cat <<'EOF' | python3 "$SKILL_DIR/scripts/agent_review.py" \
-  --agent claude \
-  --iteration 1 \
-  --max-iterations 10
-Review docs/plan.md and src/reviewer.py. Focus on missing decisions and retry behavior.
-EOF
-```
-
-Round 2+ — resume the session and send only your response bundle:
-
-```bash
-cat <<'EOF' | python3 "$SKILL_DIR/scripts/agent_review.py" \
-  --agent claude \
-  --iteration 2 \
-  --max-iterations 10 \
-  --resume-session-id "$SESSION_ID"
-Accepted: added retry-with-backoff to publish() (issue r1).
-Rejected: issue r2 — the caller already holds the lock, so the extra mutex is redundant.
-EOF
-```
-
-`--agent` is required on every round (round 1 and all resumes); use `--agent codex` to review with Codex instead.
-
-`$SESSION_ID` is the `session_id` from the previous round's JSON output. Keep using the same `--agent` across rounds — a session id from one agent is not valid for another.
-If the session is lost, start a new review session rather than reconstructing it from pasted prior feedback.
-If your stdin references files outside the current working directory, pass `--add-dir` for each extra readable directory, for example `--add-dir /tmp`. Not supported by `--agent opencode` (it can only read its working tree), so keep opencode review material in-tree.
-The helper defaults to a 600-second wall-clock budget for the whole round (including any JSON-repair retry). For unusually large reviews, pass `--timeout-seconds` to raise or lower that bound.
-
-An `operational_error` may describe how you launched the helper rather than the review itself, so don't take these two at face value: a `reason:"auth_unavailable"` when you ran under a sandbox that blocks the reviewer's login (rerun with escalated execution before concluding the user is logged out), and a `reason:"timeout"` when you ran the helper non-interactively, e.g. in the background (rerun in the foreground before concluding the reviewer was slow). Rerun the exact same helper command — fix how it is launched, not the helper: it only invokes the agent CLI and cannot bypass the environment's auth or permissions.
-
-4. Read the agent's structured output and decide point by point.
-   You are the final judge: a confident tone is not a reason to defer, and reaching consensus is not required.
-   Accept useful criticism and update the artifact.
-   Reject criticism that is mistaken, overspecified, or based on a wrong assumption.
-   After each round, print a short progress update to the user.
-   Use one line per issue the agent raised this round, in the form `<concrete problem summary> — accepted/fixed: <what changed>` or `<concrete problem summary> — rejected: <one-line reason>`.
-   Do not reuse the reviewer's raw title unless it already describes the problem clearly to a project maintainer.
-   Rewrite vague titles into a concrete maintainer-facing problem statement: what is wrong, where it is wrong, and why it matters.
-   Bad: `Auto trigger docs — fixed`.
-   Good: `The auto-mode docs said UserInfo is fetched only when email is missing, but the implementation also fetches it when email_verified is missing — fixed: updated the docs to match the code`.
-   Keep each line concise; do not paste full rationales.
-   If the agent raised no issues this round, say so on a single line.
-   Internally, track every issue across rounds by its `id` so the final report can reconcile outcomes — the `id` is for your bookkeeping only and should not appear in user-facing lines.
-5. When you disagree, prepare a response bundle for the next round.
-   Include only:
-   - accepted points and what changed
-   - rejected points and why
-   Do not re-send the full original review input.
-   If the reviewer also needs new scope, a new constraint, or an explicit file-inspection instruction, split the payload like this:
-
-   ```text
-   Now also review error handling in src/db.py.
-   === AGENT_REVIEW_RESPONSE ===
-   Accepted: fixed r1.
-   Rejected: r2 is out of scope because ...
-   ```
-6. Repeat until one of these is true:
-   - the agent approves or has no actionable issues
-   - the same disagreement repeats after a substantive rebuttal
-   - total iterations reaches 10
-7. End with a final report to the user.
-   Collect every issue the agent raised across all rounds, deduplicated by `id`, and group them.
-   Use one line per issue (`<concrete problem summary> — <one-line outcome note>`); do not include the raw `id` in user-facing lines.
-   Omit any group that is empty — do not emit a placeholder.
-   - **Fixed** — issues you accepted at any point (immediately or after discussion) and applied to the artifact.
-   - **Dropped** — issues you concluded did not need a change: the agent withdrew it after your rebuttal, or you dismissed it as mistaken, or you verified the concern was unfounded (e.g. checked the behavior live). State the basis in the outcome note (`agent withdrew` / `mistaken: …` / `verified: …`).
-   - **Unresolved** — issues where a genuine disagreement still stood when the loop ended: the agent insisted and you were not convinced, and the point was not settled by a check. These are what the user needs to judge.
-
-   If the agent raised `open_questions`, end the report with an **Open questions** group, one line each.
-   Unlike `issues`, these carry no proposed change, so the user answers or decides them rather than judging a dispute (which is what **Unresolved** is — a disagreement over a specific recommendation).
-   Drop any you already answered during the loop (state the answer inline instead of listing the bare question); list only those still genuinely open for the user.
-   Omit the group if none remain.
-
-   Then add a final block telling the user how to reopen the reviewer's session.
-   Copy the last round's `resume_command` and `resume_cwd` values verbatim; do not retype or reconstruct them.
-   Put `resume_command` in a fenced code block, and on the line above it state that it must be run from `resume_cwd`.
-   Include this block even when the verdict is `approve`.
-   Example:
-
-   To reopen the reviewer's session, run from `/abs/path/to/repo`:
-   ```
-   claude --resume b51c0aeb-6b77-4675-b4e2-55e5582f44bb
-   ```
-
-If the helper returns `{"kind":"operational_error", ...}`, do not start or continue iterations. Report that review was not possible, show the reason and message, and stop.
-
-## Script Output
-
-The helper prints normalized JSON with this shape:
-
-```json
-{
-  "session_id": "...",
-  "resume_command": "...",
-  "resume_cwd": "...",
-  "verdict": "approve",
-  "issues": [],
-  "open_questions": [],
-  "loop_signal": false,
-  "approval_reason": "..."
-}
-```
-
-- `verdict`:
-  - `approve` means no actionable issues remain
-  - `needs_changes` means the agent sees concrete changes to make
-  - `discuss` means the round is mostly about disagreement or clarification
-- `session_id` is the agent's conversation identifier to pass back via `--resume-session-id` on the next round (with the same `--agent`).
-- `resume_command` is the shell command the user can run to reopen the reviewer's session themselves; `resume_cwd` is the directory it must be run from (CLIs key sessions to that cwd).
-- `loop_signal` means the agent appears to be repeating a contested point or explicitly says consensus is unlikely soon.
+State both the subject and the desired focus, such as missing decisions, correctness risks, scope control, code quality, or implementation gaps.
+For repository changes, instruct the reviewer to run the exact diff command rather than pasting a captured diff.
+Use path-based input for project files that the reviewer can access.
+Materialize larger non-repository subjects in `/tmp` only when the selected delivery path can access that file.

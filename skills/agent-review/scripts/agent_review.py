@@ -3,9 +3,9 @@
 Run a structured peer review of a concrete artifact using a pluggable CLI agent.
 
 The orchestration here is agent-agnostic: it parses stdin, builds the review and
-repair prompts, owns the response schema and normalization, drives the retry
-loop, and emits the user-facing JSON contract. Everything CLI-specific lives in
-an adapter under `adapters/`, selected with `--agent`.
+repair prompts, owns the response schema and normalization, and drives the retry
+loop. Automatic delivery emits the user-facing JSON contract through an adapter
+under `adapters/`; manual delivery emits the prompt without invoking an adapter.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import secrets
 import subprocess
 import sys
 import time
@@ -77,7 +78,8 @@ def _build_response_schema() -> dict[str, Any]:
 RESPONSE_SCHEMA = _build_response_schema()
 DEFAULT_TIMEOUT_SECONDS = 600
 MAX_PARSE_ATTEMPTS = 2
-AGENT_RESPONSE_MARKER = "=== AGENT_REVIEW_RESPONSE ==="
+HOST_RESPONSE_MARKER = "=== AGENT_REVIEW_RESPONSE ==="
+MANUAL_AGENT = "manual"
 
 
 def parse_stdin_payload(payload: str) -> tuple[str | None, str | None]:
@@ -86,23 +88,23 @@ def parse_stdin_payload(payload: str) -> tuple[str | None, str | None]:
         raise ValueError(
             "Review input is empty. Pipe review material into stdin. "
             "Use either plain review input or append an "
-            f"'{AGENT_RESPONSE_MARKER}' section for later rounds."
+            f"'{HOST_RESPONSE_MARKER}' section for later rounds."
         )
 
-    if AGENT_RESPONSE_MARKER not in payload:
+    if HOST_RESPONSE_MARKER not in payload:
         return stripped, None
 
     lines = payload.splitlines()
     marker_index = next(
-        (index for index, line in enumerate(lines) if line.strip() == AGENT_RESPONSE_MARKER),
+        (index for index, line in enumerate(lines) if line.strip() == HOST_RESPONSE_MARKER),
         None,
     )
     if marker_index is None:
         return stripped, None
 
     review_input = "\n".join(lines[:marker_index]).strip()
-    agent_response = "\n".join(lines[marker_index + 1 :]).strip()
-    return (review_input or None), (agent_response or None)
+    host_response = "\n".join(lines[marker_index + 1 :]).strip()
+    return (review_input or None), (host_response or None)
 
 
 def build_prompt(
@@ -110,52 +112,75 @@ def build_prompt(
     iteration: int,
     max_iterations: int,
     review_input: str | None,
-    agent_response: str | None,
+    host_response: str | None,
+    manual_round_token: str | None = None,
 ) -> str:
-    sections = [
-        "You are reviewing the primary agent's work as a peer reviewer, not as the final authority.",
-        "Your job is to find blind spots, weak assumptions, correctness risks, or unnecessary complexity in the supplied review material.",
-        "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
-        "Do not rewrite the entire artifact. Focus on the few highest-value issues.",
-        "It is acceptable that some of your concerns may be rejected. Do not force consensus if the artifact is defensible.",
-        "",
-        f"Round: {iteration} of {max_iterations}",
-    ]
+    initial_round = iteration == 1
+    if initial_round:
+        sections = [
+            "You are reviewing the primary agent's work as a peer reviewer, not as the final authority.",
+            "Your job is to find blind spots, weak assumptions, correctness risks, or unnecessary complexity in the supplied review material.",
+            "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
+            "Do not rewrite the entire artifact. Focus on the few highest-value issues.",
+            "It is acceptable that some of your concerns may be rejected. Do not force consensus if the artifact is defensible.",
+            "",
+            f"Round: {iteration} of {max_iterations}",
+        ]
+    else:
+        sections = [f"Round: {iteration} of {max_iterations}"]
 
-    if agent_response is not None:
+    if host_response is not None:
         sections.extend(
             [
                 "",
                 "Primary agent response to your previous feedback:",
-                agent_response.strip(),
-                "",
-                "If you repeat a previously rejected point, add materially new reasoning or mark loop_signal true.",
+                host_response.strip(),
             ]
         )
 
-    sections.append("")
-    if review_input is None:
+    if review_input is not None:
         sections.extend(
             [
-                "No new review input was supplied this round.",
-                "Continue from the resumed session context and judge whether that response resolves your prior issues.",
-                "If the response claims files changed, inspect only the relevant current files or diff needed to verify those claims.",
-            ]
-        )
-    else:
-        sections.extend(
-            [
-                "Review input:",
+                "",
+                "Review input:" if initial_round else "New review input:",
                 review_input.rstrip(),
             ]
         )
 
+    if not initial_round:
+        if manual_round_token is not None:
+            sections.extend(
+                [
+                    "",
+                    "In your JSON response for this round, set "
+                    f"manual_review_token to exactly {manual_round_token}.",
+                ]
+            )
+        return "\n".join(sections) + "\n"
+
+    if manual_round_token is not None:
+        response_instruction = (
+            "Return a single JSON object inside one quadruple-backtick code fence. "
+            "Do not write anything outside that fence."
+        )
+        schema_description = "\n".join(
+            [
+                describe_schema(),
+                f"- manual_review_token: exactly {manual_round_token}",
+            ]
+        )
+    else:
+        response_instruction = (
+            "Return a single JSON object only — no prose, no markdown fences."
+        )
+        schema_description = describe_schema()
+
     sections.extend(
         [
             "",
-            "Return a single JSON object only — no prose, no markdown fences.",
+            response_instruction,
             "It must have exactly these keys:",
-            describe_schema(),
+            schema_description,
             "Choose verdict=approve only when no actionable issues remain.",
             "Choose verdict=needs_changes when the artifact should change.",
             "Choose verdict=discuss when the round is mainly about disagreement or clarification.",
@@ -362,11 +387,17 @@ def request_review(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run a structured peer review with a CLI agent.")
+    parser = argparse.ArgumentParser(
+        description="Run a structured peer review with automatic or manual delivery."
+    )
     parser.add_argument(
         "--agent",
         required=True,
-        help=f"Review agent to use ({', '.join(available_agents())}).",
+        help=(
+            "Review agent to use "
+            f"({', '.join(available_agents())}), or '{MANUAL_AGENT}' to emit a prompt "
+            "without invoking a reviewer CLI."
+        ),
     )
     parser.add_argument(
         "--model",
@@ -380,11 +411,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-iterations", type=int, required=True)
     parser.add_argument("--resume-session-id")
     parser.add_argument("--add-dir", action="append", default=[])
-    parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
+    parser.add_argument("--timeout-seconds", type=int)
     return parser.parse_args()
 
 
-def validate_args(args: argparse.Namespace) -> None:
+def validate_args(args: argparse.Namespace, *, manual: bool = False) -> None:
     if args.iteration < 1:
         raise OperationalError("invalid_input", "--iteration must be at least 1")
     if args.max_iterations < 1:
@@ -393,11 +424,31 @@ def validate_args(args: argparse.Namespace) -> None:
         raise OperationalError(
             "invalid_input", "--iteration cannot exceed --max-iterations"
         )
-    if args.timeout_seconds < 1:
+    if not manual and args.timeout_seconds is not None and args.timeout_seconds < 1:
         raise OperationalError("invalid_input", "--timeout-seconds must be at least 1")
-    if args.iteration > 1 and not args.resume_session_id:
+    if args.iteration > 1 and not manual and not args.resume_session_id:
         raise OperationalError(
             "invalid_input", "iteration > 1 requires --resume-session-id"
+        )
+    if manual and args.resume_session_id:
+        raise OperationalError(
+            "invalid_input", "--resume-session-id cannot be used with --agent manual"
+        )
+    if manual and args.add_dir:
+        raise OperationalError(
+            "invalid_input", "--add-dir cannot be used with --agent manual"
+        )
+    if manual and args.model:
+        raise OperationalError(
+            "invalid_input", "--model cannot be used with --agent manual"
+        )
+    if manual and args.reasoning:
+        raise OperationalError(
+            "invalid_input", "--reasoning cannot be used with --agent manual"
+        )
+    if manual and args.timeout_seconds is not None:
+        raise OperationalError(
+            "invalid_input", "--timeout-seconds cannot be used with --agent manual"
         )
 
 
@@ -417,18 +468,19 @@ def emit_operational_error(error: OperationalError, timeout_seconds: int | None 
 def main() -> int:
     try:
         args = parse_args()
-        validate_args(args)
-        agent = get_agent(args.agent)
+        manual = args.agent == MANUAL_AGENT
+        validate_args(args, manual=manual)
+        agent = None if manual else get_agent(args.agent)
     except OperationalError as exc:
         return emit_operational_error(exc)
 
     raw_input = sys.stdin.read()
     try:
-        review_input, agent_response = parse_stdin_payload(raw_input)
+        review_input, host_response = parse_stdin_payload(raw_input)
     except ValueError as exc:
         return emit_operational_error(OperationalError("invalid_input", str(exc)))
 
-    if args.iteration == 1 and agent_response is not None:
+    if args.iteration == 1 and host_response is not None:
         return emit_operational_error(
             OperationalError(
                 "invalid_input",
@@ -436,22 +488,35 @@ def main() -> int:
             )
         )
 
-    if args.iteration > 1 and agent_response is None:
-        agent_response = review_input
+    if args.iteration > 1 and host_response is None:
+        host_response = review_input
         review_input = None
 
     prompt = build_prompt(
         iteration=args.iteration,
         max_iterations=args.max_iterations,
         review_input=review_input,
-        agent_response=agent_response,
+        host_response=host_response,
+        manual_round_token=(
+            f"r{args.iteration}-{secrets.token_hex(4)}" if manual else None
+        ),
     )
 
+    if manual:
+        sys.stdout.write(prompt)
+        return 0
+
+    assert agent is not None
+    timeout_seconds = (
+        args.timeout_seconds
+        if args.timeout_seconds is not None
+        else DEFAULT_TIMEOUT_SECONDS
+    )
     try:
         review = request_review(
             agent,
             prompt,
-            args.timeout_seconds,
+            timeout_seconds,
             args.resume_session_id,
             args.add_dir,
             args.model,
@@ -463,9 +528,9 @@ def main() -> int:
         return emit_operational_error(
             OperationalError(
                 "timeout",
-                f"Agent '{args.agent}' review exceeded the configured timeout of {args.timeout_seconds} seconds.",
+                f"Agent '{args.agent}' review exceeded the configured timeout of {timeout_seconds} seconds.",
             ),
-            timeout_seconds=args.timeout_seconds,
+            timeout_seconds=timeout_seconds,
         )
     except RuntimeError as exc:
         return emit_operational_error(OperationalError("agent_cli_failed", str(exc)))

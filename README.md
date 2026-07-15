@@ -2,7 +2,8 @@
 
 A skill that brings in a second coding agent to review your work — a plan, some code, a diff, or a design note — so you get a second opinion without leaving your current agent.
 
-It runs the reviewer through that agent's own command-line tool, so the reviewer can be any CLI coding agent. Currently supported:
+It can run the reviewer through that agent's own command-line tool or prepare a prompt for the user to relay manually.
+Currently supported CLI reviewers:
 
 - Claude Code (`claude`)
 - Codex (`codex`)
@@ -30,14 +31,25 @@ Use $agent-review with codex to review the changes in src/reviewer.py and tell m
 
 The same reviewer is used for every round of a review; a session belongs to one agent, so the loop does not switch agents midway. You can optionally ask for a specific model or reasoning level (e.g. "review with codex on gpt-5.5, high reasoning") — both are optional and forwarded to that agent's CLI.
 
+For a manually relayed review, ask for `manual` instead of naming a CLI reviewer.
+The host agent will give you a prompt to send to any reviewer, extract review JSON from what you paste back, and treat any surrounding text as your own comment.
+Each round asks the reviewer to echo a token inside the JSON to help catch an accidentally pasted response from another round or review.
+
+```text
+Use $agent-review in manual mode to review this plan.
+```
+
 ## Requirements
 
 - `python3` on your `PATH`
-- the chosen reviewer's CLI, on your `PATH` and already authenticated
+- for automatic delivery, the chosen reviewer's CLI on your `PATH` and already authenticated
 
 ## How It Works
 
-The helper script at [skills/agent-review/scripts/agent_review.py](skills/agent-review/scripts/agent_review.py) is an agent-agnostic orchestrator. It runs one review round per invocation; the calling agent drives the loop. The CLI-specific details (how to invoke the agent, how to read its output, how to classify failures) live in a per-agent adapter under [skills/agent-review/scripts/adapters/](skills/agent-review/scripts/adapters/).
+The [review helper](skills/agent-review/scripts/agent_review.py) is an agent-agnostic orchestrator.
+It runs one review round per invocation; the calling agent drives the loop.
+The CLI-specific details (how to invoke the agent, how to read its output, how to classify failures) live in the [adapter modules](skills/agent-review/scripts/adapters/).
+With `--agent manual`, the same orchestrator builds the reviewer prompt without loading an adapter or launching another process.
 
 Each invocation:
 
@@ -48,6 +60,7 @@ Between rounds, the calling agent:
 
 - inspects the feedback and decides what to accept, what to reject, and what to defend
 - reuses the same conversation by resuming the session (with the same reviewer) so the discussion keeps its context
+- sends only the round delta rather than repeating the role, original subject, or response schema
 - repeats only while another round is still likely to improve the review or clarify a real disagreement
 - stops when the agent approves, when the remaining disagreement is clear enough that another round is not worth it, or when the configured round limit is reached
 - after each round, prints a one-line-per-issue progress update (what was raised and whether it was accepted or rejected)
@@ -64,7 +77,7 @@ When the review subject is large but not already materialized as a project file,
 
 ## Development
 
-Tests for the helper's pure functions and the adapters live in [skills/agent-review/tests/](skills/agent-review/tests/) and use pytest.
+Tests for the helper's pure functions and the adapters live in the [test suite](skills/agent-review/tests/) and use pytest.
 
 Run them with `uv` (no setup — pytest is fetched on demand):
 
