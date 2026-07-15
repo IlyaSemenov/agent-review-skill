@@ -6,10 +6,10 @@ Apply these rules only when you (the host agent) are Codex.
 
 The helper sends the review input (a diff, plan, or file paths — i.e. private project context) to the selected reviewer CLI, which may relay it to an external service.
 Codex's approval layer treats that as an outbound transfer of workspace data and blocks the run, even on an explicit user request.
-You cannot reliably tell from `--agent`/`--model` whether a given reviewer stays local, so do not try to — gate every reviewer the same way.
+Apply the same gate to every reviewer because `--agent` and `--model` do not reliably show whether it stays local.
 
-So before the **first** review of a session, ask the user once to confirm.
-Do not ask again for later rounds of the same session.
+Ask the user once before the **first** review of a session.
+That confirmation covers later rounds of the same session.
 
 Show, verbatim:
 
@@ -22,5 +22,5 @@ This does not bypass permissions — it makes the escalation explicit and audita
 ## When the run is blocked
 
 A block here is the approval layer, not the helper or the reviewer CLI.
-Do not raise `--timeout-seconds`, edit the helper, or fall back to a silent local review without telling the user.
+Keep the timeout and helper unchanged, and keep the user informed instead of silently falling back to a local review.
 Surface the block, quote what would be sent, and ask for the confirmation above.

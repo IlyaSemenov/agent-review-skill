@@ -17,7 +17,7 @@ The external reviewer follows the generated review prompt and does not read this
 - If the user explicitly requests user relay, read [Review via user relay](user-relay.md) and [Review loop](review-loop.md).
 - Otherwise, read [Review via CLI](cli-review.md) and [Review loop](review-loop.md).
 
-Do not read the document for the other review path.
+Load only the selected review-path document.
 If neither user relay nor a CLI reviewer is named, or the choice is ambiguous, ask the user instead of guessing.
 
 ## CLI reviewers

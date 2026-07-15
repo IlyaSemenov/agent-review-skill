@@ -56,6 +56,10 @@ class TestParseStdinPayload:
         assert review_input == "Review"
         assert host_response is None
 
+    def test_marker_only_raises(self):
+        with pytest.raises(ValueError, match="empty"):
+            parse_stdin_payload(f"  \n{HOST_RESPONSE_MARKER}\n  ")
+
     def test_marker_preserves_multiline_sections(self):
         payload = (
             "Review src/auth.py\nAlso review docs/plan.md\n"
@@ -71,11 +75,11 @@ class TestBuildPrompt:
     def test_first_round_has_no_host_response_block(self):
         prompt = build_prompt(
             iteration=1,
-            max_iterations=10,
             review_input="Review X",
             host_response=None,
         )
-        assert "Round: 1 of 10" in prompt
+        assert "Round:" not in prompt
+        assert "remaining rounds" not in prompt
         assert "Review X" in prompt
         assert "Primary agent response" not in prompt
         assert "manual_review_token" not in prompt
@@ -83,11 +87,10 @@ class TestBuildPrompt:
     def test_later_round_includes_host_response(self):
         prompt = build_prompt(
             iteration=3,
-            max_iterations=10,
             review_input="Review X",
             host_response="Host accepted r1.",
         )
-        assert "Round: 3 of 10" in prompt
+        assert "Round:" not in prompt
         assert "Primary agent response" in prompt
         assert "Host accepted r1." in prompt
         assert "New review input:" in prompt
@@ -97,11 +100,10 @@ class TestBuildPrompt:
     def test_later_round_can_continue_without_new_review_input(self):
         prompt = build_prompt(
             iteration=3,
-            max_iterations=10,
             review_input=None,
             host_response="Host accepted r1.",
         )
-        assert prompt.startswith("Round: 3 of 10\n")
+        assert prompt.startswith("Primary agent response to your previous feedback:\n")
         assert "No new review input" not in prompt
         assert "response marker" not in prompt
         assert "Review input:" not in prompt
@@ -111,27 +113,25 @@ class TestBuildPrompt:
     def test_user_relay_requests_quadruple_fenced_json(self):
         prompt = build_prompt(
             iteration=1,
-            max_iterations=10,
             review_input="Review X",
             host_response=None,
-            manual_round_token="r1-a1b2c3d4",
+            manual_round_token="a1b2c3d4",
         )
-        assert "inside one quadruple-backtick code fence" in prompt
-        assert "manual_review_token: exactly r1-a1b2c3d4" in prompt
-        assert "Do not write anything outside that fence" in prompt
-        assert "no markdown fences" not in prompt
+        assert "exactly one quadruple-backtick code fence" in prompt
+        assert "manual_review_token: exactly a1b2c3d4" in prompt
+        assert "outside that fence" not in prompt
 
     def test_user_relay_followup_contains_only_round_delta_and_token(self):
         prompt = build_prompt(
             iteration=2,
-            max_iterations=10,
             review_input=None,
             host_response="Host fixed r1.",
-            manual_round_token="r2-e5f6a7b8",
+            manual_round_token="e5f6a7b8",
         )
-        assert prompt.startswith("Round: 2 of 10\n")
+        assert prompt.startswith("Primary agent response to your previous feedback:\n")
+        assert "Round:" not in prompt
         assert "Host fixed r1." in prompt
-        assert "manual_review_token to exactly r2-e5f6a7b8" in prompt
+        assert "manual_review_token to exactly e5f6a7b8" in prompt
         assert "You are reviewing" not in prompt
         assert "quadruple-backtick" not in prompt
         assert "verdict:" not in prompt
@@ -150,8 +150,6 @@ class TestMainInputValidation:
                 "manual",
                 "--iteration",
                 "1",
-                "--max-iterations",
-                "10",
             ],
         )
         monkeypatch.setattr(
@@ -170,8 +168,8 @@ class TestMainInputValidation:
         assert main() == 0
         output = capsys.readouterr().out
         assert "Review src/auth.py" in output
-        assert "inside one quadruple-backtick code fence" in output
-        assert "manual_review_token: exactly r1-a1b2c3d4" in output
+        assert "exactly one quadruple-backtick code fence" in output
+        assert "manual_review_token: exactly a1b2c3d4" in output
 
     def test_user_relay_later_round_does_not_require_session_id(
         self, monkeypatch, capsys
@@ -185,8 +183,6 @@ class TestMainInputValidation:
                 "manual",
                 "--iteration",
                 "2",
-                "--max-iterations",
-                "10",
             ],
         )
         monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "e5f6a7b8")
@@ -197,9 +193,39 @@ class TestMainInputValidation:
         assert "Primary agent response to your previous feedback:" in output
         assert "Rejected: r1 is mistaken." in output
         assert "No new review input" not in output
-        assert "manual_review_token to exactly r2-e5f6a7b8" in output
+        assert "manual_review_token to exactly e5f6a7b8" in output
         assert "You are reviewing" not in output
         assert "verdict:" not in output
+
+    def test_iteration_can_exceed_default_soft_budget(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["agent_review.py", "--agent", "manual", "--iteration", "11"],
+        )
+        monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "a1b2c3d4")
+        monkeypatch.setattr("sys.stdin.read", lambda: "Accepted: fixed the issue.")
+
+        assert main() == 0
+        assert "Accepted: fixed the issue." in capsys.readouterr().out
+
+    def test_explicit_iteration_limit_remains_hard(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "agent_review.py",
+                "--agent",
+                "manual",
+                "--iteration",
+                "11",
+                "--max-iterations",
+                "10",
+            ],
+        )
+
+        assert main() == 1
+        assert "--iteration cannot exceed --max-iterations" in capsys.readouterr().out
 
     @pytest.mark.parametrize(
         ("option", "value"),
@@ -510,7 +536,7 @@ class TestBuildRepairPrompt:
     def test_includes_error(self):
         out = build_repair_prompt("bad verdict")
         assert "bad verdict" in out
-        assert "valid JSON only" in out
+        assert "exactly one bare JSON object" in out
 
 
 class TestDescribeSchema:
@@ -521,7 +547,7 @@ class TestDescribeSchema:
 
     def test_embedded_in_prompt(self):
         prompt = build_prompt(
-            iteration=1, max_iterations=10, review_input="x", host_response=None
+            iteration=1, review_input="x", host_response=None
         )
         assert "verdict:" in prompt
         assert "approval_reason:" in prompt

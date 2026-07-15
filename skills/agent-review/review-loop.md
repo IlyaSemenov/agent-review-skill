@@ -17,7 +17,7 @@ After each round, give the user one concise line per issue:
 
 Rewrite vague reviewer titles into concrete maintainer-facing problem statements.
 If the reviewer raised no issues, say so on one line.
-Track every issue internally by its stable `id`, but do not expose ids in user-facing progress lines.
+Track every issue internally by its stable `id`; omit ids from user-facing progress lines.
 
 ## Prepare another round
 
@@ -33,7 +33,18 @@ Accepted: fixed the missing retry.
 Rejected: the proposed lock is redundant.
 ```
 
-Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, `loop_signal` confirms that the discussion is stuck, or the configured iteration limit is reached.
+Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
+
+Use 10 rounds as a soft working budget when the user did not set a limit.
+Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
+Continue beyond it only while recent rounds are producing substantive new information or verifying meaningful changes.
+
+Refresh the soft budget only when user-authored input materially changes the requirements or review scope.
+Relayed reviewer output, an ordinary response to feedback, and fixes within the existing scope stay within the current budget.
+Keep the technical iteration number and reviewer session continuous when refreshing the soft budget.
+
+If the user explicitly sets a maximum number of rounds, keep `--max-iterations` in the fixed command template for every remaining invocation.
+Treat an explicit maximum as a hard limit whose extension or reset requires the user's permission.
 
 ## Final report
 
@@ -45,7 +56,6 @@ Use one concise line per issue and omit empty groups.
 - **Unresolved** — genuine disagreements that remain for the user to judge.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
-Do not expose raw issue ids.
 
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
 Omit questions already answered during the loop.

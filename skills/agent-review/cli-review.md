@@ -31,8 +31,7 @@ Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper
 ```bash
 cat <<'EOF' | python3 "$SKILL_DIR/scripts/agent_review.py" \
   --agent claude \
-  --iteration 1 \
-  --max-iterations 10
+  --iteration 1
 Review docs/plan.md and src/reviewer.py. Focus on missing decisions and retry behavior.
 EOF
 ```
@@ -49,7 +48,6 @@ Send only the host response to prior feedback unless the reviewer also needs new
 cat <<'EOF' | python3 "$SKILL_DIR/scripts/agent_review.py" \
   --agent claude \
   --iteration 2 \
-  --max-iterations 10 \
   --resume-session-id "$SESSION_ID"
 Accepted: added retry-with-backoff to publish().
 Rejected: the caller already holds the lock, so the proposed mutex is redundant.
@@ -60,7 +58,7 @@ The helper sends a delta-only follow-up and does not repeat the role, original s
 If the session is lost, start a new review instead of reconstructing it from pasted history.
 
 Use `--add-dir` once per extra readable directory referenced by stdin.
-Do not use `--add-dir` with OpenCode because its adapter rejects unsupported extra directories.
+With OpenCode, omit `--add-dir` because its adapter rejects unsupported extra directories.
 
 ## Timeouts and operational errors
 

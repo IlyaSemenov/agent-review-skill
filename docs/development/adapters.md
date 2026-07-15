@@ -22,12 +22,12 @@ Keep the adapter free of stdin parsing, review prompt construction, normalizatio
 
 Research the real CLI contract with a live run before writing code.
 Verify stdin support, noninteractive invocation, output shape, session id, resume behavior, schema enforcement, model and reasoning flags, and failure signaling.
-Do not infer fixtures from documentation alone.
+Base test fixtures only on output captured from a live CLI run, not on documentation.
 
 Add `tests/test_adapter_<name>.py` with output captured from the real CLI.
 Update the reviewer list and `argument-hint` in `skills/agent-review/SKILL.md`.
 Update the supported-reviewer list in `README.md`.
-Do not enumerate reviewers anywhere else.
+Keep those two lists as the only reviewer enumerations.
 
 ## Verified CLI contracts
 
@@ -48,7 +48,7 @@ Read JSONL events and take the session id from `thread.started.thread_id`.
 Pass the model with `--model` and reasoning with `-c model_reasoning_effort=<value>`.
 Use the schema file and keep `additionalProperties: false` on every object.
 
-Do not pass sandbox or add-dir flags to `codex exec resume` because that subcommand rejects them.
+Omit sandbox and add-dir flags from `codex exec resume`; the subcommand rejects them.
 Treat `turn.failed` and `error` events as `AgentStreamError` even when Codex exits zero.
 
 ### OpenCode

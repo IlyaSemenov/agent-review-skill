@@ -17,12 +17,15 @@ Build a full prompt only for round 1.
 Include the reviewer role, review rules, initial subject, response-field contract, and verdict guidance in that prompt.
 
 Build delta-only prompts for round 2 and later.
-Include only the current round number, the host response to prior feedback, any new review scope, and per-round values that changed.
-Do not repeat the reviewer role, general review rules, response schema, or unchanged output guidance.
+Include only the host response to prior feedback, any new review scope, and per-round values that changed.
 Apply the same rule to resumed CLI sessions and user-relayed sessions while the reviewer conversation retains the review subject.
 Review via CLI verifies continuity through the resumed session id.
 Review via user relay must recover with a new full prompt only when the reviewer loses the subject itself, not merely the JSON format.
-Keep the original issue history and total-round limit across that recovery.
+Keep the original issue history and any explicit user-defined round limit across that recovery.
+
+Keep `--iteration` as technical host/helper state that selects a full or follow-up prompt.
+Keep `--max-iterations` optional and enforce it only as an explicit user-defined hard limit.
+Leave the default soft budget and decisions to refresh it to the host runtime instructions.
 
 Keep `manual_review_token` out of the shared `RESPONSE_SCHEMA`.
 It is user-relay transport metadata and is the only output-field reminder that changes on each user-relayed follow-up.
@@ -58,7 +61,7 @@ Reject CLI-only options instead of silently ignoring them.
 
 Keep host guidance in a separate document next to `SKILL.md`, such as `codex.md` or `claude-code.md`.
 Use one clearly named core branch only when a host-specific code optimization is unavoidable and the agent-agnostic default remains correct.
-Do not spread host checks across the core.
+Confine host checks to that branch.
 
 When a sandboxed host reports `auth_unavailable`, rerun the helper with the required escalation before diagnosing reviewer authentication.
 When a backgrounded reviewer reports a false timeout, fix the launch mode before changing the helper timeout.

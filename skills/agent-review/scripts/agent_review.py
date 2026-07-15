@@ -83,13 +83,14 @@ MANUAL_AGENT = "manual"
 
 
 def parse_stdin_payload(payload: str) -> tuple[str | None, str | None]:
+    empty_input_message = (
+        "Review input is empty. Pipe review material into stdin. "
+        "Use either plain review input or append an "
+        f"'{HOST_RESPONSE_MARKER}' section for later rounds."
+    )
     stripped = payload.strip()
     if not stripped:
-        raise ValueError(
-            "Review input is empty. Pipe review material into stdin. "
-            "Use either plain review input or append an "
-            f"'{HOST_RESPONSE_MARKER}' section for later rounds."
-        )
+        raise ValueError(empty_input_message)
 
     if HOST_RESPONSE_MARKER not in payload:
         return stripped, None
@@ -102,15 +103,16 @@ def parse_stdin_payload(payload: str) -> tuple[str | None, str | None]:
     if marker_index is None:
         return stripped, None
 
-    review_input = "\n".join(lines[:marker_index]).strip()
-    host_response = "\n".join(lines[marker_index + 1 :]).strip()
-    return (review_input or None), (host_response or None)
+    review_input = "\n".join(lines[:marker_index]).strip() or None
+    host_response = "\n".join(lines[marker_index + 1 :]).strip() or None
+    if review_input is None and host_response is None:
+        raise ValueError(empty_input_message)
+    return review_input, host_response
 
 
 def build_prompt(
     *,
     iteration: int,
-    max_iterations: int,
     review_input: str | None,
     host_response: str | None,
     manual_round_token: str | None = None,
@@ -121,27 +123,24 @@ def build_prompt(
             "You are reviewing the primary agent's work as a peer reviewer, not as the final authority.",
             "Your job is to find blind spots, weak assumptions, correctness risks, or unnecessary complexity in the supplied review material.",
             "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
-            "Do not rewrite the entire artifact. Focus on the few highest-value issues.",
-            "It is acceptable that some of your concerns may be rejected. Do not force consensus if the artifact is defensible.",
-            "",
-            f"Round: {iteration} of {max_iterations}",
+            "Focus on the few highest-value issues.",
+            "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",
         ]
     else:
-        sections = [f"Round: {iteration} of {max_iterations}"]
+        sections = []
 
     if host_response is not None:
+        if sections:
+            sections.append("")
         sections.extend(
-            [
-                "",
-                "Primary agent response to your previous feedback:",
-                host_response.strip(),
-            ]
+            ["Primary agent response to your previous feedback:", host_response.strip()]
         )
 
     if review_input is not None:
+        if sections:
+            sections.append("")
         sections.extend(
             [
-                "",
                 "Review input:" if initial_round else "New review input:",
                 review_input.rstrip(),
             ]
@@ -152,17 +151,14 @@ def build_prompt(
             sections.extend(
                 [
                     "",
-                    "In your JSON response for this round, set "
+                    "In your JSON response, set "
                     f"manual_review_token to exactly {manual_round_token}.",
                 ]
             )
         return "\n".join(sections) + "\n"
 
     if manual_round_token is not None:
-        response_instruction = (
-            "Return a single JSON object inside one quadruple-backtick code fence. "
-            "Do not write anything outside that fence."
-        )
+        response_instruction = "Return exactly one quadruple-backtick code fence containing a single JSON object."
         schema_description = "\n".join(
             [
                 describe_schema(),
@@ -170,9 +166,7 @@ def build_prompt(
             ]
         )
     else:
-        response_instruction = (
-            "Return a single JSON object only — no prose, no markdown fences."
-        )
+        response_instruction = "Return exactly one bare JSON object."
         schema_description = describe_schema()
 
     sections.extend(
@@ -184,7 +178,7 @@ def build_prompt(
             "Choose verdict=approve only when no actionable issues remain.",
             "Choose verdict=needs_changes when the artifact should change.",
             "Choose verdict=discuss when the round is mainly about disagreement or clarification.",
-            "Set loop_signal=true when you are substantially repeating a contested point or believe consensus is unlikely within the remaining rounds.",
+            "Set loop_signal=true when you are substantially repeating a contested point or another exchange is unlikely to add useful information.",
             "Keep issues short and specific. Prefer 0-3 issues unless the artifact is seriously flawed.",
             "If there are no issues, return an empty issues array.",
         ]
@@ -275,8 +269,7 @@ def build_repair_prompt(parse_error: str) -> str:
         [
             "Your previous response did not match the required structured JSON output.",
             f"Parsing error: {parse_error}",
-            "Return valid JSON only, matching the same schema as before.",
-            "Do not add commentary, markdown fences, or extra wrapper text.",
+            "Return exactly one bare JSON object matching the same schema as before.",
         ]
     ) + "\n"
 
@@ -408,7 +401,11 @@ def parse_args() -> argparse.Namespace:
         help="Reasoning/effort level for the chosen agent (passed through to its CLI). Optional.",
     )
     parser.add_argument("--iteration", type=int, required=True)
-    parser.add_argument("--max-iterations", type=int, required=True)
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        help="Optional user-defined hard limit for this review.",
+    )
     parser.add_argument("--resume-session-id")
     parser.add_argument("--add-dir", action="append", default=[])
     parser.add_argument("--timeout-seconds", type=int)
@@ -418,9 +415,9 @@ def parse_args() -> argparse.Namespace:
 def validate_args(args: argparse.Namespace, *, manual: bool = False) -> None:
     if args.iteration < 1:
         raise OperationalError("invalid_input", "--iteration must be at least 1")
-    if args.max_iterations < 1:
+    if args.max_iterations is not None and args.max_iterations < 1:
         raise OperationalError("invalid_input", "--max-iterations must be at least 1")
-    if args.iteration > args.max_iterations:
+    if args.max_iterations is not None and args.iteration > args.max_iterations:
         raise OperationalError(
             "invalid_input", "--iteration cannot exceed --max-iterations"
         )
@@ -494,11 +491,10 @@ def main() -> int:
 
     prompt = build_prompt(
         iteration=args.iteration,
-        max_iterations=args.max_iterations,
         review_input=review_input,
         host_response=host_response,
         manual_round_token=(
-            f"r{args.iteration}-{secrets.token_hex(4)}" if manual else None
+            secrets.token_hex(4) if manual else None
         ),
     )
 

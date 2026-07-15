@@ -65,7 +65,9 @@ Between rounds, the calling agent:
 - continues the same reviewer conversation through CLI resume or user relay
 - sends only the round delta rather than repeating the role, original subject, or response schema
 - repeats only while another round is still likely to improve the review or clarify a real disagreement
-- stops when the agent approves, when the remaining disagreement is clear enough that another round is not worth it, or when the configured round limit is reached
+- treats 10 rounds as a soft budget unless you explicitly request a hard limit
+- refreshes that soft budget when you materially change the requirements or review scope
+- stops when the agent approves or when the remaining disagreement is clear enough that another round is not worth it
 - after each round, prints a one-line-per-issue progress update (what was raised and whether it was accepted or rejected)
 - at the end, reports back to the user a final summary of all issues raised across rounds, grouped into what was fixed, what was rejected and dropped, and what remains unresolved for the user to judge
 
