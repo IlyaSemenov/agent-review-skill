@@ -197,6 +197,38 @@ class TestMainInputValidation:
         assert "You are reviewing" not in output
         assert "verdict:" not in output
 
+    def test_user_relay_later_round_splits_new_scope_and_host_response(
+        self, monkeypatch, capsys
+    ):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "agent_review.py",
+                "--agent",
+                "manual",
+                "--iteration",
+                "2",
+            ],
+        )
+        monkeypatch.setattr("agent_review.secrets.token_hex", lambda _size: "a1b2c3d4")
+        monkeypatch.setattr(
+            "sys.stdin.read",
+            lambda: (
+                "Now also review src/db.py.\n"
+                f"{HOST_RESPONSE_MARKER}\n"
+                "Accepted: fixed r1."
+            ),
+        )
+
+        assert main() == 0
+        output = capsys.readouterr().out
+        assert "Primary agent response to your previous feedback:" in output
+        assert "Accepted: fixed r1." in output
+        assert "New review input:" in output
+        assert "Now also review src/db.py." in output
+        assert 'manual_review_token to the string "a1b2c3d4" exactly' in output
+
     def test_iteration_can_exceed_default_soft_budget(self, monkeypatch, capsys):
         monkeypatch.setattr(
             sys,
