@@ -115,10 +115,10 @@ class TestBuildPrompt:
             iteration=1,
             review_input="Review X",
             host_response=None,
-            manual_round_token="a1b2c3d4",
+            manual_round_token="0123abcd",
         )
         assert "exactly one quadruple-backtick code fence" in prompt
-        assert "manual_review_token: exactly a1b2c3d4" in prompt
+        assert 'manual_review_token: string, exactly "0123abcd"' in prompt
         assert "outside that fence" not in prompt
 
     def test_user_relay_followup_contains_only_round_delta_and_token(self):
@@ -131,7 +131,7 @@ class TestBuildPrompt:
         assert prompt.startswith("Primary agent response to your previous feedback:\n")
         assert "Round:" not in prompt
         assert "Host fixed r1." in prompt
-        assert "manual_review_token to exactly e5f6a7b8" in prompt
+        assert 'manual_review_token to the string "e5f6a7b8" exactly' in prompt
         assert "You are reviewing" not in prompt
         assert "quadruple-backtick" not in prompt
         assert "verdict:" not in prompt
@@ -169,7 +169,7 @@ class TestMainInputValidation:
         output = capsys.readouterr().out
         assert "Review src/auth.py" in output
         assert "exactly one quadruple-backtick code fence" in output
-        assert "manual_review_token: exactly a1b2c3d4" in output
+        assert 'manual_review_token: string, exactly "a1b2c3d4"' in output
 
     def test_user_relay_later_round_does_not_require_session_id(
         self, monkeypatch, capsys
@@ -193,7 +193,7 @@ class TestMainInputValidation:
         assert "Primary agent response to your previous feedback:" in output
         assert "Rejected: r1 is mistaken." in output
         assert "No new review input" not in output
-        assert "manual_review_token to exactly e5f6a7b8" in output
+        assert 'manual_review_token to the string "e5f6a7b8" exactly' in output
         assert "You are reviewing" not in output
         assert "verdict:" not in output
 

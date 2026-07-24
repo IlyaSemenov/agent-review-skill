@@ -118,6 +118,9 @@ def build_prompt(
     manual_round_token: str | None = None,
 ) -> str:
     initial_round = iteration == 1
+    manual_token_literal = (
+        json.dumps(manual_round_token) if manual_round_token is not None else None
+    )
     if initial_round:
         sections = [
             "You are reviewing the primary agent's work as a peer reviewer, not as the final authority.",
@@ -147,22 +150,22 @@ def build_prompt(
         )
 
     if not initial_round:
-        if manual_round_token is not None:
+        if manual_token_literal is not None:
             sections.extend(
                 [
                     "",
                     "In your JSON response, set "
-                    f"manual_review_token to exactly {manual_round_token}.",
+                    f"manual_review_token to the string {manual_token_literal} exactly.",
                 ]
             )
         return "\n".join(sections) + "\n"
 
-    if manual_round_token is not None:
+    if manual_token_literal is not None:
         response_instruction = "Return exactly one quadruple-backtick code fence containing a single JSON object."
         schema_description = "\n".join(
             [
                 describe_schema(),
-                f"- manual_review_token: exactly {manual_round_token}",
+                f"- manual_review_token: string, exactly {manual_token_literal}",
             ]
         )
     else:
