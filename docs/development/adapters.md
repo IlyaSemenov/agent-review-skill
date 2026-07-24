@@ -1,73 +1,24 @@
 # Adapter development
 
-This document covers reviewer CLI adapters, registry entries, and verified CLI behavior.
+This document records adapter boundaries and the workflow for changing a reviewer CLI integration.
+Keep shared orchestration rules in [Core development](core.md).
 
-## Protocol
+## Boundary
 
-Implement `ReviewAgent` from `scripts/adapters/base.py` in one module per CLI.
-Register the adapter with one entry in `scripts/adapters/__init__.py`.
-Do not add reviewer-name branches to `scripts/agent_review.py`.
+Implement one `ReviewAgent` module per CLI and register it in `scripts/adapters/__init__.py`.
+Keep reviewer-name branches out of `scripts/agent_review.py`.
 
-Implement these methods:
+Adapters own CLI argv, temporary invocation files, raw payload and session-id extraction, interactive resume commands, and CLI-specific failure classification.
+They do not own stdin parsing, prompt construction, review normalization, parse-repair policy, or loop policy.
 
-- `build_command(*, schema, resume_session_id, add_dirs, model, reasoning) -> AgentInvocation` builds argv for round 1 or resume and returns any cleanup paths.
-- `extract_payload(stdout) -> dict` extracts the review object and raises `ValueError` for unusable payloads or `AgentStreamError` for failures reported in the stream.
-- `extract_session_id(stdout) -> str | None` extracts the resumable conversation id.
-- `resume_command(session_id) -> str` returns the interactive command a user runs to reopen the session.
-- `classify_failure(completed) -> OperationalError` maps failures to `auth_unavailable`, `agent_cli_failed`, or `invalid_input`.
+## Adding or changing an adapter
 
-Keep the adapter free of stdin parsing, review prompt construction, normalization, retries, and loop policy.
+Verify the real CLI with a live run before encoding or changing its contract.
+Cover stdin, noninteractive and resume invocation, output and failure events, session ids, schema enforcement, extra directories, model and reasoning flags, and interactive resume syntax.
+Build fixtures from captured CLI output rather than documentation or invented examples.
 
-## Adding an adapter
+Keep model and reasoning values opaque to the core and pass them again on resume.
 
-Research the real CLI contract with a live run before writing code.
-Verify stdin support, noninteractive invocation, output shape, session id, resume behavior, schema enforcement, model and reasoning flags, and failure signaling.
-Base test fixtures only on output captured from a live CLI run, not on documentation.
-
-Add `tests/test_adapter_<name>.py` with output captured from the real CLI.
-Update the reviewer list and `argument-hint` in `skills/agent-review/SKILL.md`.
-Update the supported-reviewer list in `README.md`.
-Keep those two lists as the only reviewer enumerations.
-
-## Verified CLI contracts
-
-All supported CLIs read the prompt from stdin.
-
-### Claude Code
-
-Use `claude -p --output-format json --json-schema <inline>`.
-Read one JSON object and take the session id from `session_id`.
-Pass the model with `--model` and reasoning with `--effort`.
-Use the CLI-enforced inline schema.
-
-### Codex
-
-Use `codex exec --json --output-schema <file> --skip-git-repo-check --sandbox read-only` for round 1.
-Use `codex exec resume <id> ...` for later rounds.
-Read JSONL events and take the session id from `thread.started.thread_id`.
-Pass the model with `--model` and reasoning with `-c model_reasoning_effort=<value>`.
-Use the schema file and keep `additionalProperties: false` on every object.
-
-Omit sandbox and add-dir flags from `codex exec resume`; the subcommand rejects them.
-Treat `turn.failed` and `error` events as `AgentStreamError` even when Codex exits zero.
-
-### OpenCode
-
-Use `opencode run --format json` and read JSONL events.
-Take the session id from `sessionID`.
-Pass the model with `-m provider/model` and reasoning with `--variant`.
-Rely on prompt instructions and the repair retry because OpenCode has no schema-enforcement flag.
-
-Fail fast when `add_dirs` is nonempty because OpenCode has no equivalent flag.
-Treat a `type:error` event as `AgentStreamError` even when OpenCode exits zero.
-
-## Resume and failure invariants
-
-Pass `--model` and `--reasoning` again on every resume round.
-Keep `resume_command()` in the CLI's interactive form rather than the helper's noninteractive resume form.
-Classify stream-reported failures before attempting JSON repair.
-
-Run reviewer CLIs in the foreground when their tool use cannot complete from a background process.
-OpenCode is known to produce false timeouts when backgrounded.
-
-Dogfood a new adapter on this repository's own diff with another reviewer after its focused tests pass.
+Add focused tests in `tests/test_adapter_<name>.py`.
+Keep the concrete reviewer list only in `skills/agent-review/SKILL.md` and `README.md`, and update both when adding an adapter.
+Dogfood a new adapter on this repository after its focused tests pass.

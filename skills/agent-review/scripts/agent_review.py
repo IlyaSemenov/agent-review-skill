@@ -28,9 +28,9 @@ from adapters import (
     get_agent,
 )
 
-# Source of truth for the review contract. The JSON schema below is derived
-# from these so the enums and required keys cannot drift between the schema we
-# send to the agent and the validation we run on its response.
+# Source of truth for the review contract. RESPONSE_SCHEMA, describe_schema(),
+# and normalization derive from these so the prompt, enforced schema, and
+# validation cannot drift.
 OUTPUT_KEYS = (
     "verdict",
     "issues",
@@ -78,6 +78,7 @@ def _build_response_schema() -> dict[str, Any]:
 RESPONSE_SCHEMA = _build_response_schema()
 DEFAULT_TIMEOUT_SECONDS = 600
 MAX_PARSE_ATTEMPTS = 2
+# The marker separates new review scope above from the host response below.
 HOST_RESPONSE_MARKER = "=== AGENT_REVIEW_RESPONSE ==="
 MANUAL_AGENT = "manual"
 

@@ -18,6 +18,8 @@ Observed `opencode run --format json` behaviour (OpenCode 1.17.x):
   -specific, e.g. high/max/minimal); resume is `-s <session-id>`.
 - Like codex, OpenCode needs escalated execution in a sandbox; auth/login
   failures surface on stderr with a non-zero exit.
+- Backgrounded helper runs can stall during reviewer tool use and surface as
+  false timeouts, so run them in the foreground.
 """
 
 from __future__ import annotations
