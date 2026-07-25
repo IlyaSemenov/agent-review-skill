@@ -2,6 +2,25 @@
 
 This document defines the review loop shared by both review paths.
 
+## Surface feedback before acting
+
+Follow this sequence for every successful reviewer response, including the first round and all resumed rounds:
+
+1. Give the user a concise, concrete summary of every reviewer issue.
+2. Investigate and judge the issues.
+3. Show the host's decision and intended action for every issue.
+4. Apply accepted changes.
+5. Start another round when useful.
+
+Never make an investigation tool call before step 1 or mutate the artifact before step 3.
+Immediately after each reviewer response and before investigating or editing, give the user a concise list of every reported issue, specific enough to show what may change and why it matters.
+Rewrite vague reviewer titles into concrete maintainer-facing problem statements.
+Do not replace the issue list with only a count or a general summary.
+If the reviewer raised no issues, say so on one line.
+This update is informational, not an approval request.
+Continue the review without waiting unless the user interrupts.
+Track every issue internally by its stable `id`; omit ids from user-facing progress lines.
+
 ## Judge each round
 
 Treat the reviewer as a peer rather than the final authority.
@@ -10,14 +29,14 @@ Reject criticism that is mistaken, overspecified, or based on a wrong assumption
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
 
-After each round, give the user one concise line per issue:
+After checking the issues, but before changing the artifact or starting another round, give the user one concise decision line per issue:
 
-- `<concrete problem summary> — accepted/fixed: <what changed>`
+- `<concrete problem summary> — accepted: <what you will change>`
 - `<concrete problem summary> — rejected: <one-line reason>`
 
-Rewrite vague reviewer titles into concrete maintainer-facing problem statements.
-If the reviewer raised no issues, say so on one line.
-Track every issue internally by its stable `id`; omit ids from user-facing progress lines.
+Do not edit the artifact before sending this decision update.
+The decision update is informational, not an approval request.
+Continue immediately with accepted changes unless the user interrupts.
 
 ## Prepare another round
 

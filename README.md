@@ -68,7 +68,7 @@ Between rounds, the calling agent:
 - treats 10 rounds as a soft budget unless you explicitly request a hard limit
 - refreshes that soft budget when you materially change the requirements or review scope
 - stops when the agent approves or when the remaining disagreement is clear enough that another round is not worth it
-- after each round, prints a one-line-per-issue progress update (what was raised and whether it was accepted or rejected)
+- after each round, reports every issue before investigating or editing, then reports its decision and intended change before applying accepted feedback
 - at the end, reports back to the user a final summary of all issues raised across rounds, grouped into what was fixed, what was rejected and dropped, and what remains unresolved for the user to judge
 
 When the review refers to existing project files, the host points the reviewer at those files directly.
