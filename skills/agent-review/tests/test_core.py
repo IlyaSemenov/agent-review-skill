@@ -455,6 +455,27 @@ class TestMainInputValidation:
         assert '"reason": "invalid_input"' in captured.out
         assert "iteration 1 accepts only review input" in captured.out
 
+    def test_review_output_preserves_unicode(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["agent_review.py", "--agent", "fake", "--iteration", "1"],
+        )
+        monkeypatch.setattr("agent_review.get_agent", lambda _name: _SuccessAgent())
+        monkeypatch.setattr(
+            "agent_review.request_review",
+            lambda *args, **kwargs: {
+                **_valid_payload(),
+                "approval_reason": "Всё хорошо",
+            },
+        )
+        monkeypatch.setattr("sys.stdin.read", lambda: "Review src/auth.py")
+
+        assert main() == 0
+        output = capsys.readouterr().out
+        assert "Всё хорошо" in output
+        assert "\\u0412" not in output
+
 
 def _valid_payload():
     return {

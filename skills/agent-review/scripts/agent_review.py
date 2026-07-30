@@ -461,7 +461,7 @@ def emit_operational_error(error: OperationalError, timeout_seconds: int | None 
     }
     if timeout_seconds is not None:
         payload["timeout_seconds"] = timeout_seconds
-    json.dump(payload, sys.stdout, indent=2)
+    json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return 1
 
@@ -535,7 +535,7 @@ def main() -> int:
     except RuntimeError as exc:
         return emit_operational_error(OperationalError("agent_cli_failed", str(exc)))
 
-    json.dump(review, sys.stdout, indent=2)
+    json.dump(review, sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
     return 0
 
