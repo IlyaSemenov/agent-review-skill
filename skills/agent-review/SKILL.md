@@ -1,7 +1,6 @@
 ---
 name: agent-review
 description: Run a peer CLI agent (Claude Code, Codex, OpenCode), or prepare a reviewer handoff via user relay, to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
-argument-hint: <claude|codex|opencode|manual> [what to review]
 ---
 
 # Agent Review
