@@ -16,6 +16,9 @@ Show, verbatim:
 - the exact helper command you will run (including `--agent` and `--model`), and
 - the confirmation wording the user needs to give for you to request escalation — that they explicitly authorize sending this review input to the reviewer.
 
+Put the exact helper command alone in a fenced code block and close the fence immediately after the command or heredoc terminator.
+Ask the user to reply with the confirmation wording, and put that wording alone in a separate fenced code block.
+
 Once the user gives that confirmation, request the sandbox escalation and run the exact command shown.
 This does not bypass permissions — it makes the escalation explicit and auditable.
 
