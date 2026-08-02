@@ -7,8 +7,9 @@ This path runs a supported reviewer through its CLI.
 Pass the selected reviewer as `--agent <identifier>` on every round.
 Keep the same reviewer throughout one review because session ids are CLI-specific.
 
-Optionally pass `--model` and `--reasoning` independently.
-Forward both values unchanged and pass them again on every resume round.
+Pass `--model` only when the user explicitly requested a specific model, and pass `--reasoning` only when the user explicitly requested a reasoning level.
+Never select, infer, or discover either value on the user's behalf; when a value was not requested, omit its flag so the reviewer CLI uses its configured default.
+Forward requested values unchanged and pass them again on every resume round.
 Let the selected CLI validate its accepted model and reasoning values.
 
 OpenCode expects model values in `provider/model` form and has no CLI-side schema enforcement.

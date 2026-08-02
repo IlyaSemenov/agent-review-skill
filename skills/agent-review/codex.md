@@ -13,7 +13,7 @@ That confirmation covers later rounds of the same session.
 
 Show, verbatim:
 
-- the exact helper command you will run (including `--agent` and `--model`), and
+- the exact helper command you will run (including `--agent` and any user-requested `--model` or `--reasoning` flag), and
 - the confirmation wording the user needs to give for you to request escalation — that they explicitly authorize sending this review input to the reviewer.
 
 Put the exact helper command alone in a fenced code block and close the fence immediately after the command or heredoc terminator.
