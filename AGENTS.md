@@ -49,7 +49,8 @@ uv run --with pytest python -m pytest tests/ -v
 ## Documentation rules
 
 - Keep the concrete reviewer list only in `skills/agent-review/SKILL.md` and `README.md`.
-- Keep guidance for review via CLI, review via user relay, and specific host environments in separate documents next to `SKILL.md`.
+- Keep common guidance for review via CLI and review via user relay in separate documents next to `SKILL.md`.
+- Keep host-specific runtime guidance in `skills/agent-review/hosts/` and reviewer-specific runtime guidance in `skills/agent-review/reviewers/`.
 - Keep `SKILL.md` as the runtime router and move detailed instructions into its linked runtime documents.
 - Write project names in prose as Claude Code, Codex, and OpenCode; use lowercase only for CLI commands and `--agent` identifiers.
 - Use `…` only for genuinely open sets, not for the concrete reviewer list.

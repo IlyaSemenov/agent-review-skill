@@ -11,18 +11,7 @@ Pass `--model` only when the user explicitly requested a specific model, and pas
 Never select, infer, or discover either value on the user's behalf; when a value was not requested, omit its flag so the reviewer CLI uses its configured default.
 Forward requested values unchanged and pass them again on every resume round.
 Let the selected CLI validate its accepted model and reasoning values.
-
-OpenCode expects model values in `provider/model` form and has no CLI-side schema enforcement.
-Claude Code and Codex enforce the shared response schema through their CLIs.
-
-## Read host guidance
-
-Read the document matching the host agent before running the helper:
-
-- Claude Code host: read [Claude Code host guidance](claude-code.md).
-- Codex host: read [Codex host guidance](codex.md).
-
-If no host document exists, run the helper in the foreground with the required permissions.
+When `SKILL.md` links a reviewer-specific runtime document, follow it for value syntax and capability limits.
 
 ## Run round 1
 
@@ -58,8 +47,7 @@ EOF
 The helper sends a delta-only follow-up and does not repeat the role, original subject, schema, or unchanged guidance.
 If the session is lost, start a new review instead of reconstructing it from pasted history.
 
-Use `--add-dir` once per extra readable directory referenced by stdin.
-With OpenCode, omit `--add-dir` because its adapter rejects unsupported extra directories.
+Use `--add-dir` once per extra readable directory referenced by stdin unless the selected reviewer's runtime document forbids it.
 
 ## Timeouts and operational errors
 

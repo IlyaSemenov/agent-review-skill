@@ -13,6 +13,7 @@ def test_available_agents_includes_registered_adapters():
     assert "claude" in agents
     assert "codex" in agents
     assert "opencode" in agents
+    assert "pi" in agents
 
 
 def test_get_known_agent_returns_protocol_impl():

@@ -83,6 +83,8 @@ class TestBuildPrompt:
         assert "Review X" in prompt
         assert "Primary agent response" not in prompt
         assert "manual_review_token" not in prompt
+        assert "do not modify files or repository state" in prompt
+        assert "read-only checks" in prompt
 
     def test_later_round_includes_host_response(self):
         prompt = build_prompt(

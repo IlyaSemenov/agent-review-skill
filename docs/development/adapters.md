@@ -10,6 +10,10 @@ Keep reviewer-name branches out of `scripts/agent_review.py`.
 
 Adapters own CLI argv, temporary invocation files, raw payload and session-id extraction, interactive resume commands, and CLI-specific failure classification.
 They do not own stdin parsing, prompt construction, review normalization, parse-repair policy, or loop policy.
+Keep host-facing rules for a named reviewer in `skills/agent-review/reviewers/<identifier>.md`.
+Keep low-level invocation and parsing details in the adapter module and this development document.
+Treat CLI reviewers as user-selected trusted local agents.
+Treat a reviewer tool allowlist as invocation policy, not as a security boundary.
 
 ## Adding or changing an adapter
 

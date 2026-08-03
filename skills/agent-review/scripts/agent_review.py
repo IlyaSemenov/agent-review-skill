@@ -126,6 +126,7 @@ def build_prompt(
         sections = [
             "You are reviewing the primary agent's work as a peer reviewer, not as the final authority.",
             "Your job is to find blind spots, weak assumptions, correctness risks, or unnecessary complexity in the supplied review material.",
+            "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
             "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
             "Focus on the few highest-value issues.",
             "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",
@@ -193,9 +194,9 @@ def build_prompt(
 def describe_schema() -> str:
     """Render the response contract as plain text, derived from the constants.
 
-    Agents whose CLI enforces the schema (claude, codex) get this redundantly;
-    agents without schema enforcement (opencode) rely on it to hit the exact
-    field names instead of inventing their own issue shape.
+    Agents whose CLI enforces the schema get this redundantly; agents without
+    schema enforcement rely on it to hit the exact field names instead of
+    inventing their own issue shape.
     """
     issue_fields = ", ".join(ISSUE_KEYS)
     return "\n".join(

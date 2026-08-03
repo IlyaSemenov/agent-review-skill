@@ -8,6 +8,7 @@ Currently supported CLI reviewers:
 - Claude Code (`claude`)
 - Codex (`codex`)
 - OpenCode (`opencode`)
+- pi (`pi`)
 
 You use it from any agent that supports skills (e.g. Claude, Codex, OpenCode, pi.dev, …). It adds `$agent-review`: you point it at a concrete subject, it runs the chosen reviewer on it, and your agent stays responsible for deciding what to accept, what to reject, and whether another round is worth doing.
 
@@ -77,8 +78,13 @@ When the review subject is large but not already materialized as a project file,
 
 ## Notes
 
-- The skill is explicit-only. It should run when you ask for it, not implicitly.
-- In sandboxed environments, the reviewer's login may be unavailable even when the CLI works in your normal shell. In that case, the agent may need to rerun the helper with escalation.
+- The skill is explicit-only.
+  It should run when you ask for it, not implicitly.
+- In sandboxed environments, the reviewer's login may be unavailable even when the CLI works in your normal shell.
+  In that case, the agent may need to rerun the helper with escalation.
+- The skill treats every CLI reviewer as a user-selected trusted local agent.
+  Reviewers run noninteractively with adapter-defined arguments and tools, not necessarily their CLI defaults.
+  The review-only prompt is a behavioral contract rather than a uniform security boundary.
 - The helper defaults to a 600-second timeout for larger reviews.
 
 ## Development

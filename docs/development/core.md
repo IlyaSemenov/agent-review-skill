@@ -12,6 +12,7 @@ Keep CLI command construction, raw-output extraction, session-id extraction, and
 ## Round contract
 
 Build a full prompt only for round 1 and delta-only prompts while the reviewer conversation retains the original subject.
+Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
 Limit later prompts to the host response, new review scope, and per-round values that changed.
 
 Keep `--iteration` as technical state that selects the prompt shape.

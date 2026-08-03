@@ -10,10 +10,11 @@ from .base import AgentInvocation, AgentStreamError, OperationalError, ReviewAge
 from .claude import ClaudeAgent
 from .codex import CodexAgent
 from .opencode import OpencodeAgent
+from .pi import PiAgent
 
 _REGISTRY: dict[str, ReviewAgent] = {
     agent.name: agent
-    for agent in (ClaudeAgent(), CodexAgent(), OpencodeAgent())
+    for agent in (ClaudeAgent(), CodexAgent(), OpencodeAgent(), PiAgent())
 }
 
 

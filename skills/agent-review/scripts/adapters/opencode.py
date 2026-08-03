@@ -11,7 +11,8 @@ Observed `opencode run --format json` behaviour (OpenCode 1.17.x):
   `sessionID`; the resumable id is read from there (no dedicated start event).
 - The model's final answer arrives as `{"type":"text", "part":{"type":"text",
   "text":"..."}}`; `part.text` holds the review JSON as a *string* (needs a
-  second parse). Take the last such event.
+  second parse). Take the last such event and tolerate fences or surrounding
+  prose because OpenCode has no CLI-side schema enforcement.
 - The prompt is read from stdin (an empty positional message), so the
   orchestrator's `input=prompt` works unchanged.
 - Model is `-m provider/model`; reasoning effort is `--variant` (provider
@@ -27,6 +28,8 @@ from __future__ import annotations
 import json
 import subprocess
 from typing import Any
+
+from text_json import parse_json_object
 
 from .base import AgentInvocation, AgentStreamError, OperationalError
 
@@ -92,10 +95,7 @@ class OpencodeAgent:
         if text is None:
             raise ValueError("opencode output has no text part")
 
-        payload = json.loads(_strip_code_fence(text))
-        if not isinstance(payload, dict):
-            raise ValueError("opencode text part is not a JSON object")
-        return payload
+        return parse_json_object(text)
 
     def extract_session_id(self, stdout: str) -> str | None:
         for event in _iter_events(stdout):
@@ -116,25 +116,6 @@ class OpencodeAgent:
         if _looks_like_auth_failure(message):
             return OperationalError("auth_unavailable", message)
         return OperationalError("agent_cli_failed", message)
-
-
-def _strip_code_fence(text: str) -> str:
-    """Strip a leading/trailing markdown code fence, if present.
-
-    opencode is the one adapter with no CLI schema enforcement, so a fenced
-    ```json ... ``` wrapper is the most likely deviation from the prompt
-    contract. Stripping it here keeps that drift from consuming the single
-    JSON-repair retry. No-op for unfenced text (claude/codex never hit this).
-    """
-    stripped = text.strip()
-    if not stripped.startswith("```"):
-        return stripped
-    lines = stripped.splitlines()
-    # Drop the opening fence line (``` or ```json) and a closing ``` line.
-    lines = lines[1:]
-    if lines and lines[-1].strip().startswith("```"):
-        lines = lines[:-1]
-    return "\n".join(lines).strip()
 
 
 def _iter_events(stdout: str) -> list[dict[str, Any]]:

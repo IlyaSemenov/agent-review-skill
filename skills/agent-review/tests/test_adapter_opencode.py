@@ -174,6 +174,13 @@ class TestExtractPayload:
         )
         assert OpencodeAgent().extract_payload(jsonl) == {"verdict": "approve"}
 
+    def test_extracts_json_object_surrounded_by_prose(self):
+        text = 'Review complete.\n{\"verdict\":\"approve\"}\nNo further issues.'
+        jsonl = json.dumps(
+            {"type": "text", "part": {"type": "text", "text": text}}
+        )
+        assert OpencodeAgent().extract_payload(jsonl) == {"verdict": "approve"}
+
     def test_extract_payload_single_text_event_contract(self):
         # Regression pin: the adapter assumes the complete answer is in ONE text
         # event and takes the last one. If opencode ever splits the JSON across
