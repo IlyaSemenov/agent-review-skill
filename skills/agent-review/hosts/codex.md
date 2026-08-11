@@ -22,6 +22,24 @@ Ask the user to reply with the confirmation wording, and put that wording alone 
 Once the user gives that confirmation, request the sandbox escalation and run the exact command shown.
 This does not bypass permissions — it makes the escalation explicit and auditable.
 
+## Track yielded helper commands
+
+Run the helper in the foreground through `exec_command` with a short `yield_time_ms`, such as 1000 ms, and always inspect the result for `session_id`.
+Because the helper buffers reviewer output, `{session_id, output: ""}` means the process is still running, not that it completed or returned an operational error.
+Save that terminal `session_id` and poll it with `write_stdin` until `exit_code` appears.
+Do not launch another reviewer while the previous terminal session's state is unknown, and tell the user that the reviewer is still working when an update is due.
+This terminal `session_id` is distinct from the reviewer `session_id` in the helper's final JSON used by `--resume-session-id`.
+
+```text
+result = exec_command({cmd, workdir, yield_time_ms: 1000})
+if result.session_id is present:
+  terminal_session_id = result.session_id
+  while result.exit_code is absent:
+    update the user when due
+    result = write_stdin({session_id: terminal_session_id, chars: "", yield_time_ms: 30000})
+interpret output only after exit_code appears
+```
+
 ## When the run is blocked
 
 A block here is the approval layer, not the helper or the reviewer CLI.
