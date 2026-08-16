@@ -1,0 +1,18 @@
+{
+  "name": "agent-review-skill",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "lint": "biome check --write .",
+    "prepare": "lefthook install",
+    "test": "bun test",
+    "types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
+    "@tsconfig/bun": "^1.0.10",
+    "@types/bun": "^1.3.14",
+    "typescript": "^7.0.2"
+  }
+}

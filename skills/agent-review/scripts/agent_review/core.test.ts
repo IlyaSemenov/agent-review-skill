@@ -1,0 +1,169 @@
+import assert from "node:assert/strict"
+import { describe, test } from "node:test"
+
+import {
+  buildPrompt,
+  buildRepairPrompt,
+  describeSchema,
+  HOST_RESPONSE_MARKER,
+  ISSUE_KEYS,
+  looksLikeReviewPayload,
+  normalizeReview,
+  parseJsonObject,
+  parseStdinPayload,
+} from "./core.ts"
+
+function validPayload() {
+  return {
+    verdict: "approve",
+    issues: [],
+    open_questions: [],
+    loop_signal: false,
+    approval_reason: "looks good",
+  }
+}
+
+describe("parseStdinPayload", () => {
+  test("rejects empty input", () => {
+    assert.throws(() => parseStdinPayload(" \n"), /empty/)
+  })
+
+  test("returns plain input", () => {
+    assert.deepEqual(parseStdinPayload(" Review src/auth.ts "), [
+      "Review src/auth.ts",
+      undefined,
+    ])
+  })
+
+  test("splits a marker on its own line", () => {
+    const input = `Review src/auth.ts\n${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`
+    assert.deepEqual(parseStdinPayload(input), [
+      "Review src/auth.ts",
+      "Accepted: fixed it.",
+    ])
+  })
+
+  test("ignores an inline marker", () => {
+    const input = `The document mentions ${HOST_RESPONSE_MARKER} inline.`
+    assert.deepEqual(parseStdinPayload(input), [input, undefined])
+  })
+
+  test("supports response-only continuation", () => {
+    assert.deepEqual(parseStdinPayload(`${HOST_RESPONSE_MARKER}\nRejected.`), [
+      undefined,
+      "Rejected.",
+    ])
+  })
+})
+
+describe("prompt construction", () => {
+  test("builds a full first-round prompt", () => {
+    const prompt = buildPrompt({ iteration: 1, reviewInput: "Review X" })
+    assert.match(prompt, /host agent's work/)
+    assert.match(prompt, /Review X/)
+    assert.match(prompt, /do not modify files or repository state/)
+    assert.match(prompt, /approval_reason:/)
+    assert.doesNotMatch(prompt, /manual_review_token/)
+  })
+
+  test("builds a delta-only continuation", () => {
+    const prompt = buildPrompt({
+      iteration: 3,
+      reviewInput: "Also inspect Y",
+      hostResponse: "Fixed X",
+    })
+    assert.match(prompt, /^Host agent response to your previous feedback:/)
+    assert.match(prompt, /New review input:/)
+    assert.doesNotMatch(prompt, /host agent's work/)
+    assert.doesNotMatch(prompt, /approval_reason:/)
+  })
+
+  test("adds a quoted relay token", () => {
+    const prompt = buildPrompt({
+      iteration: 1,
+      reviewInput: "Review X",
+      manualRoundToken: "0123abcd",
+    })
+    assert.match(prompt, /quadruple-backtick/)
+    assert.match(prompt, /manual_review_token: string, exactly "0123abcd"/)
+  })
+
+  test("lists every issue field", () => {
+    const schema = describeSchema()
+    for (const key of ISSUE_KEYS) assert.match(schema, new RegExp(key))
+  })
+
+  test("repair prompt includes the parsing error", () => {
+    assert.match(buildRepairPrompt("bad verdict"), /bad verdict/)
+  })
+})
+
+describe("JSON extraction and normalization", () => {
+  test("parses bare, fenced, and prose-wrapped objects", () => {
+    assert.equal(parseJsonObject('{"verdict":"approve"}').verdict, "approve")
+    assert.equal(
+      parseJsonObject('```json\n{"verdict":"approve"}\n```').verdict,
+      "approve",
+    )
+    assert.equal(
+      parseJsonObject(
+        'Done.\n{"verdict":"approve","nested":{"brace":"}"}}\nThanks.',
+      ).verdict,
+      "approve",
+    )
+  })
+
+  test("rejects arrays and prose without JSON", () => {
+    assert.throws(() => parseJsonObject("[1,2,3]"), /not a JSON object/)
+    assert.throws(() => parseJsonObject("Review complete"))
+  })
+
+  test("recognizes and normalizes a valid review", () => {
+    assert.equal(looksLikeReviewPayload(validPayload()), true)
+    const payload = {
+      ...validPayload(),
+      open_questions: [" one ", "", "two"],
+      issues: [
+        {
+          id: " i1 ",
+          title: " Missing retry ",
+          severity: "high",
+          recommendation: " Add retry ",
+          rationale: " Network operations fail ",
+        },
+      ],
+    }
+    const review = normalizeReview(payload)
+    assert.deepEqual(review.open_questions, ["one", "two"])
+    const [issue] = review.issues
+    assert.ok(issue)
+    assert.equal(issue.id, "i1")
+  })
+
+  test("rejects malformed review fields", () => {
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), verdict: "maybe" }),
+      /verdict/,
+    )
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), loop_signal: "false" }),
+      /loop_signal/,
+    )
+    assert.throws(
+      () =>
+        normalizeReview({
+          ...validPayload(),
+          issues: [
+            {
+              id: "",
+              title: "title",
+              severity: "low",
+              recommendation: "fix",
+              rationale: "why",
+            },
+          ],
+        }),
+      /empty/,
+    )
+  })
+})

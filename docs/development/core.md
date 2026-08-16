@@ -1,13 +1,15 @@
 # Core development
 
-This document records ownership and invariants for `scripts/agent_review.py`.
+This document records ownership and invariants for `scripts/agent_review/core.ts` and their composition in `scripts/agent_review/cli.ts`.
 Keep runtime review procedure in the documents linked from `skills/agent-review/SKILL.md`.
+
 Read [User-relay development](user-relay.md) for invariants unique to `--agent manual`.
 
 ## Ownership
 
-Keep CLI-independent orchestration in the core: stdin parsing, prompt construction, the shared response schema, normalization, validation, parse repair, the round deadline, and normalized output.
-Keep CLI command construction, raw-output extraction, session-id extraction, and CLI failure classification in adapters.
+Keep the transport-independent review contract in `core.ts`: stdin parsing, prompt construction, JSON extraction, normalization, and parse-repair prompts.
+Keep argument parsing, validation, standard I/O, normalized output, and top-level composition in `cli.ts`.
+Keep ACP sessions, the round deadline, retries, timeout cancellation, process execution, and transport failure classification in `acpx.ts`.
 
 ## Round contract
 
@@ -22,11 +24,13 @@ Enforce `--max-iterations` only when the user supplied an explicit hard limit; k
 
 Interpret round-1 stdin as review input and unmarked round-2+ stdin as the host response.
 Use the literal `=== AGENT_REVIEW_RESPONSE ===` marker to separate optional new scope above it from the host response below it.
+
 Reject empty input and round-1 response bundles.
 Require `--resume-session-id` for CLI follow-ups but not for `--agent manual`.
 
-Apply one wall-clock deadline to the complete round, including the single parse-repair retry.
-Preserve the adapter's interactive resume command and the review working directory in normalized CLI output.
+Apply one wall-clock deadline to session creation, ACP configuration, the review prompt, and the single parse-repair retry.
+After a timeout, make one bounded best-effort ACP cancellation before returning the operational error.
+Return the persistent `acpx` session name in normalized CLI output.
 
 ## Host-specific behavior
 

@@ -14,10 +14,13 @@ Follow this sequence for every successful reviewer response, including the first
 
 Never make an investigation tool call before step 1 or mutate the artifact before step 3.
 Immediately after each reviewer response and before investigating or editing, give the user a concise list of every reported issue, specific enough to show what may change and why it matters.
+
 Rewrite vague reviewer titles into concrete maintainer-facing problem statements.
 Do not replace the issue list with only a count or a general summary.
+
 If the reviewer raised no issues, say so on one line.
 This update is informational, not an approval request.
+
 Continue the review without waiting unless the user interrupts.
 Track every issue internally by its stable `id`; omit ids from user-facing progress lines.
 
@@ -26,6 +29,7 @@ Track every issue internally by its stable `id`; omit ids from user-facing progr
 Treat the reviewer as a peer rather than the final authority.
 Accept useful criticism and update the artifact.
 Reject criticism that is mistaken, overspecified, or based on a wrong assumption.
+
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
 
@@ -78,7 +82,3 @@ State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
 Omit questions already answered during the loop.
-
-After review via CLI, append the last output's `resume_command` and state that it must be run from `resume_cwd`.
-Put the command in a fenced code block and include it even after approval.
-After review via user relay, omit the resume block.

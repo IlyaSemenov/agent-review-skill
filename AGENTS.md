@@ -14,8 +14,12 @@ One review is a sequence of rounds controlled by the host agent:
 6. If another round is useful, the same reviewer conversation receives only the host's response, relevant changes, and any new scope.
 7. The host stops when further review is not useful and reports the outcome to the user.
 
-`scripts/agent_review.py` implements one round of this process.
-In this documentation, **core** means its CLI-independent behavior, while an **adapter** contains behavior specific to one reviewer CLI.
+`scripts/agent_review.ts` implements one round of this process.
+In this documentation, **core** means its transport-independent behavior, while **acpx transport** means the shared CLI-review execution path.
+
+Keep `scripts/agent_review.ts` as a thin executable entrypoint.
+Keep the implementation and its colocated tests in `scripts/agent_review/`.
+Organize modules around cohesive responsibilities and update the linked development documents when those boundaries change.
 
 Use these role names consistently while editing the skill:
 
@@ -34,7 +38,7 @@ Classify the requested change by where it acts in the review flow, then read the
 
 - Changes to helper input, prompt construction shared by both review paths, round behavior, response fields, normalization, retries, timeout, or helper output: read [Core development](docs/development/core.md).
 - Changes to `--agent manual`, user relay, relay prompts, or lenient interpretation of pasted reviewer responses: read both [User-relay development](docs/development/user-relay.md) and [Core development](docs/development/core.md).
-- Changes to how a named reviewer CLI is invoked, resumed, parsed, registered, or diagnosed: read [Adapter development](docs/development/adapters.md).
+- Changes to how a named reviewer is invoked, resumed, parsed, registered, or diagnosed through ACP: read [acpx development](docs/development/acpx.md).
 - Changes to instructions followed by a host running the installed skill: edit the matching runtime document selected by `skills/agent-review/SKILL.md` and read the development document for the behavior being documented.
 
 Read every listed document when a task spans multiple areas.
@@ -42,8 +46,9 @@ Read every listed document when a task spans multiple areas.
 ## Commands
 
 ```bash
-cd skills/agent-review
-uv run --with pytest python -m pytest tests/ -v
+bun run types
+bun run lint
+bun test
 ```
 
 ## Documentation rules
