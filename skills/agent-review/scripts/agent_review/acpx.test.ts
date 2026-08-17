@@ -434,4 +434,11 @@ describe("acpx orchestration", () => {
       "agent_cli_failed",
     )
   })
+
+  test("includes the terminating signal when no exit code is available", () => {
+    const failure = classifyFailure("unknown error", null, "SIGKILL")
+
+    assert.equal(failure.reason, "agent_cli_failed")
+    assert.match(failure.message, /terminated by signal SIGKILL/)
+  })
 })

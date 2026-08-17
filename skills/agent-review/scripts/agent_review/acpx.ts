@@ -234,7 +234,7 @@ export async function runAcpxCommand(
     child.stdin.on("error", () => {
       // A fast process failure can close stdin before the buffered prompt is written.
     })
-    child.on("close", (code) => {
+    child.on("close", (code, signal) => {
       clearTimeout(timer)
       if (forceKillTimer !== undefined) clearTimeout(forceKillTimer)
       if (timedOut) {
@@ -252,6 +252,7 @@ export async function runAcpxCommand(
           classifyFailure(
             stderr.trim() || stdout.trim() || "unknown error",
             code,
+            signal,
           ),
         )
         return
@@ -265,31 +266,36 @@ export async function runAcpxCommand(
 export function classifyFailure(
   message: string,
   exitCode?: number | null,
+  signal?: NodeJS.Signals | null,
 ): OperationalError {
+  const diagnostic =
+    exitCode === null && signal !== null && signal !== undefined
+      ? `${message}\nProcess terminated by signal ${signal}.`
+      : message
   if (
     /not logged in|unauthori[sz]ed|authentication failed|missing api key|no api key|login required|auth(?:entication)?[ _]required/i.test(
       message,
     )
   ) {
-    return new OperationalError("auth_unavailable", message)
+    return new OperationalError("auth_unavailable", diagnostic)
   }
   if (
     /eperm|eacces|operation not permitted|permission denied/i.test(message) &&
     /\.acpx|\.npm|\.pi|\.claude|\.codex|opencode/i.test(message)
   ) {
-    return new OperationalError("sandbox_restriction", message)
+    return new OperationalError("sandbox_restriction", diagnostic)
   }
   if (
     /enotfound|eai_again|network|could not resolve|unable to resolve|cache mode|spawn npx enoent/i.test(
       message,
     )
   ) {
-    return new OperationalError("dependency_unavailable", message)
+    return new OperationalError("dependency_unavailable", diagnostic)
   }
   if (exitCode === 3) {
-    return new OperationalError("timeout", message)
+    return new OperationalError("timeout", diagnostic)
   }
-  return new OperationalError("agent_cli_failed", message)
+  return new OperationalError("agent_cli_failed", diagnostic)
 }
 
 async function cancelTimedOutReview(options: {
