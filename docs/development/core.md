@@ -32,6 +32,7 @@ Apply one wall-clock deadline to session creation, ACP configuration, the review
 Start the parse-repair retry only when at least 30 seconds remain in that same deadline.
 After malformed reviewer output, preserve `agent_cli_failed` with the parse error and raw output even when the repair attempt cannot start or times out.
 After a timeout, make one bounded best-effort ACP cancellation before returning the operational error.
+After any failed first round, make one bounded best-effort close of the session created by that invocation; never close a resumed session automatically.
 Return the persistent `acpx` session name in normalized CLI output.
 
 ## Host-specific behavior

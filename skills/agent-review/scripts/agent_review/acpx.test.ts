@@ -122,6 +122,86 @@ describe("acpx orchestration", () => {
     assert.ok(call.includes("existing"))
   })
 
+  test("closes a newly created session after a failed review", async () => {
+    const calls: Array<{ args: string[]; timeoutMs: number }> = []
+    const failure = new OperationalError("agent_cli_failed", "review failed")
+    const runAcpx: RunAcpx = async (args, _input, timeoutMs) => {
+      calls.push({ args, timeoutMs })
+      if (args.includes("new")) return { stdout: "record", stderr: "" }
+      if (args.includes("close")) return { stdout: "closed", stderr: "" }
+      throw failure
+    }
+
+    await assert.rejects(
+      requestReview({
+        agent: "pi",
+        prompt: "review",
+        timeoutSeconds: 30,
+        cwd: "/repo",
+        runAcpx,
+        createSessionName: () => "named",
+      }),
+      (error: unknown) => error === failure,
+    )
+
+    const closeCall = calls.find(({ args }) => args.includes("close"))
+    assert.ok(closeCall)
+    assert.deepEqual(closeCall.args.slice(-5), [
+      "--agent",
+      REVIEWER_COMMANDS.pi,
+      "sessions",
+      "close",
+      "named",
+    ])
+    assert.equal(closeCall.timeoutMs, 5_000)
+  })
+
+  test("does not close a resumed session after a failed review", async () => {
+    const calls: string[][] = []
+    const runAcpx: RunAcpx = async (args) => {
+      calls.push(args)
+      throw new OperationalError("agent_cli_failed", "review failed")
+    }
+
+    await assert.rejects(
+      requestReview({
+        agent: "pi",
+        prompt: "follow-up",
+        timeoutSeconds: 30,
+        resumeSessionId: "existing",
+        cwd: "/repo",
+        runAcpx,
+      }),
+      /review failed/,
+    )
+
+    assert.equal(
+      calls.some((args) => args.includes("close")),
+      false,
+    )
+  })
+
+  test("preserves the review failure when session cleanup fails", async () => {
+    const failure = new OperationalError("agent_cli_failed", "review failed")
+    const runAcpx: RunAcpx = async (args) => {
+      if (args.includes("new")) return { stdout: "record", stderr: "" }
+      if (args.includes("close")) throw new Error("cleanup failed")
+      throw failure
+    }
+
+    await assert.rejects(
+      requestReview({
+        agent: "pi",
+        prompt: "review",
+        timeoutSeconds: 30,
+        cwd: "/repo",
+        runAcpx,
+        createSessionName: () => "named",
+      }),
+      (error: unknown) => error === failure,
+    )
+  })
+
   test("discovers and sets the semantic reasoning option", async () => {
     const calls: string[][] = []
     const runAcpx: RunAcpx = async (args) => {
@@ -363,7 +443,9 @@ describe("acpx orchestration", () => {
     )
 
     const cancelCall = calls.find(({ args }) => args.includes("cancel"))
+    const closeCall = calls.find(({ args }) => args.includes("close"))
     assert.ok(cancelCall)
+    assert.ok(closeCall)
     assert.deepEqual(cancelCall.args.slice(-5), [
       "--agent",
       REVIEWER_COMMANDS.pi,
@@ -372,6 +454,7 @@ describe("acpx orchestration", () => {
       "named",
     ])
     assert.equal(cancelCall.timeoutMs, 5_000)
+    assert.ok(calls.indexOf(cancelCall) < calls.indexOf(closeCall))
   })
 
   test("reports the configured budget only when the review deadline expires", async () => {

@@ -24,7 +24,7 @@ export const REVIEWER_COMMANDS = {
 
 const MAX_PARSE_ATTEMPTS = 2
 const MIN_PARSE_REPAIR_MS = 30_000
-const TIMEOUT_CANCEL_GRACE_MS = 5_000
+const SESSION_CLEANUP_GRACE_MS = 5_000
 
 class ReviewDeadlineError extends OperationalError {
   constructor(message: string) {
@@ -82,6 +82,7 @@ export async function requestReview(options: {
   } = options
   const deadline = performance.now() + timeoutSeconds * 1_000
   const sessionId = resumeSessionId ?? createSessionName()
+  let sessionCreated = false
 
   try {
     if (resumeSessionId === undefined) {
@@ -99,6 +100,7 @@ export async function requestReview(options: {
         undefined,
         remainingMs(deadline),
       )
+      sessionCreated = true
     }
 
     if (reasoning !== undefined) {
@@ -183,16 +185,19 @@ export async function requestReview(options: {
 
     throw new Error("Unreachable parse-attempt state")
   } catch (error) {
-    if (error instanceof OperationalError && error.reason === "timeout") {
+    let failure = error
+    if (failure instanceof OperationalError && failure.reason === "timeout") {
       await cancelTimedOutReview({ agent, sessionId, cwd, runAcpx })
-      if (error instanceof ReviewDeadlineError) {
-        throw new OperationalError(
+      if (failure instanceof ReviewDeadlineError) {
+        failure = new OperationalError(
           "timeout",
           `Agent '${agent}' review exceeded the configured timeout of ${timeoutSeconds} seconds.`,
         )
       }
     }
-    throw error
+    if (sessionCreated)
+      await closeFailedReviewSession({ agent, sessionId, cwd, runAcpx })
+    throw failure
   }
 }
 
@@ -315,10 +320,34 @@ async function cancelTimedOutReview(options: {
         sessionId,
       ],
       undefined,
-      TIMEOUT_CANCEL_GRACE_MS,
+      SESSION_CLEANUP_GRACE_MS,
     )
   } catch {
     // Preserve the original timeout after a bounded best-effort cancellation.
+  }
+}
+
+async function closeFailedReviewSession(options: {
+  agent: AgentName
+  sessionId: string
+  cwd: string
+  runAcpx: RunAcpx
+}): Promise<void> {
+  const { agent, sessionId, cwd, runAcpx } = options
+  try {
+    await runAcpx(
+      [
+        ...baseAcpxArgs(cwd, "quiet"),
+        ...agentSelectionArgs(agent),
+        "sessions",
+        "close",
+        sessionId,
+      ],
+      undefined,
+      SESSION_CLEANUP_GRACE_MS,
+    )
+  } catch {
+    // Preserve the review failure after bounded best-effort cleanup.
   }
 }
 

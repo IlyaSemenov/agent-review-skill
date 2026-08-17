@@ -11,7 +11,7 @@ Build named-session prompt invocations with the explicit `prompt` subcommand bef
 Recheck live adapter behavior whenever the client or an adapter pin changes.
 
 Use a persistent named `acpx` session as the helper's `session_id` and continue it through `--resume-session-id`.
-Use the same exact reviewer command for session creation, prompts, configuration, cancellation, and resume because the command is part of the `acpx` session scope key.
+Use the same exact reviewer command for session creation, prompts, configuration, cancellation, failure cleanup, and resume because the command is part of the `acpx` session scope key.
 Treat an adapter pin change as a session-scope change; sessions created with the previous command are not resumable through the new command.
 Keep that session identifier internal to the host review loop and do not expose a user-facing continuation command.
 

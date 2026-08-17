@@ -8,7 +8,7 @@ Run the helper command in the foreground, never with `run_in_background`.
 This applies to every round, including `--resume-session-id` rounds.
 Foreground execution keeps the Bash invocation attached to the active review and makes its final status observable before the host continues.
 
-Set the Bash tool `timeout` above the helper's budget (e.g. `910000` for the default budget).
+Set the Bash tool `timeout` above the helper's budget (e.g. `930000` for the default budget).
 The default Bash timeout is usually shorter than the helper's own `--timeout-seconds` budget, so a foreground review that legitimately runs that long can be killed by the Bash tool before the helper returns.
 This is the Bash tool's limit, distinct from `--timeout-seconds` below.
 
