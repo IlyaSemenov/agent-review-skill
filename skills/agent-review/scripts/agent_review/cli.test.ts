@@ -2,7 +2,13 @@ import assert from "node:assert/strict"
 import { describe, test } from "node:test"
 
 import { ACPX_PACKAGE, type RunAcpx } from "./acpx.ts"
-import { main, parseArgs, validateArgs } from "./cli.ts"
+import {
+  DEFAULT_TIMEOUT_SECONDS,
+  MAX_TIMEOUT_SECONDS,
+  main,
+  parseArgs,
+  validateArgs,
+} from "./cli.ts"
 import { OperationalError } from "./core.ts"
 
 function validPayload() {
@@ -29,6 +35,10 @@ function captureOutput(): {
 }
 
 describe("CLI argument contract", () => {
+  test("uses one 900-second default review budget", () => {
+    assert.equal(DEFAULT_TIMEOUT_SECONDS, 900)
+  })
+
   test("parses supported options", () => {
     assert.deepEqual(
       parseArgs([
@@ -86,6 +96,25 @@ describe("CLI argument contract", () => {
     assert.throws(
       () => validateArgs({ agent: "manual", iteration: 1, model: "x" }),
       /--model cannot be used/,
+    )
+  })
+
+  test("rejects timeout values that overflow Node timers", () => {
+    assert.doesNotThrow(() =>
+      validateArgs({
+        agent: "pi",
+        iteration: 1,
+        timeoutSeconds: MAX_TIMEOUT_SECONDS,
+      }),
+    )
+    assert.throws(
+      () =>
+        validateArgs({
+          agent: "pi",
+          iteration: 1,
+          timeoutSeconds: MAX_TIMEOUT_SECONDS + 1,
+        }),
+      new RegExp(`at most ${MAX_TIMEOUT_SECONDS}`),
     )
   })
 })

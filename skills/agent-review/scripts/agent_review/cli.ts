@@ -16,7 +16,8 @@ import {
   parseStdinPayload,
 } from "./core.ts"
 
-export const DEFAULT_TIMEOUT_SECONDS = 600
+export const DEFAULT_TIMEOUT_SECONDS = 900
+export const MAX_TIMEOUT_SECONDS = Math.floor(2_147_483_647 / 1_000)
 
 const MANUAL_AGENT = "manual"
 
@@ -126,6 +127,16 @@ export function validateArgs(args: CliArgs): void {
     throw new OperationalError(
       "invalid_input",
       "--timeout-seconds must be at least 1",
+    )
+  }
+  if (
+    !manual &&
+    args.timeoutSeconds !== undefined &&
+    args.timeoutSeconds > MAX_TIMEOUT_SECONDS
+  ) {
+    throw new OperationalError(
+      "invalid_input",
+      `--timeout-seconds must be at most ${MAX_TIMEOUT_SECONDS}`,
     )
   }
   if (args.iteration > 1 && !manual && !args.resumeSessionId) {

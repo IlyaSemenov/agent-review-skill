@@ -97,7 +97,7 @@ When the review subject is large but not already materialized as a project file,
 - The skill treats every CLI reviewer as a user-selected trusted local agent.
   Reviewers run noninteractively through ACP with every local tool permission request approved, so they can execute commands and modify project files.
   The review-only prompt is a behavioral contract rather than a uniform security boundary.
-- The helper defaults to a 600-second timeout for larger reviews.
+- The helper gives each CLI round a 900-second wall-clock budget.
 
 ## Development
 

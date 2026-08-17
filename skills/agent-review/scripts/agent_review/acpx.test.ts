@@ -268,7 +268,7 @@ describe("acpx orchestration", () => {
     const review = await requestReview({
       agent: "pi",
       prompt: "review",
-      timeoutSeconds: 30,
+      timeoutSeconds: 60,
       cwd: "/repo",
       runAcpx,
       createSessionName: () => "named",
@@ -278,6 +278,66 @@ describe("acpx orchestration", () => {
     const repairPrompt = prompts[1]
     assert.ok(repairPrompt)
     assert.match(repairPrompt, /previous response did not match/)
+  })
+
+  test("reports malformed output when too little repair budget remains", async () => {
+    let promptCalls = 0
+    const runAcpx: RunAcpx = async (args) => {
+      if (args.includes("sessions")) return { stdout: "record", stderr: "" }
+      if (args.includes("cancel")) return { stdout: "cancelled", stderr: "" }
+      promptCalls += 1
+      return { stdout: "not json", stderr: "" }
+    }
+
+    await assert.rejects(
+      requestReview({
+        agent: "pi",
+        prompt: "review",
+        timeoutSeconds: 29,
+        cwd: "/repo",
+        runAcpx,
+        createSessionName: () => "named",
+      }),
+      (error: unknown) =>
+        error instanceof OperationalError &&
+        error.reason === "agent_cli_failed" &&
+        /repair attempt was skipped/.test(error.message) &&
+        /Raw output:\nnot json/.test(error.message),
+    )
+    assert.equal(promptCalls, 1)
+  })
+
+  test("preserves the parse failure when the repair attempt times out", async () => {
+    let promptCalls = 0
+    let cancelCalls = 0
+    const runAcpx: RunAcpx = async (args) => {
+      if (args.includes("sessions")) return { stdout: "record", stderr: "" }
+      if (args.includes("cancel")) {
+        cancelCalls += 1
+        return { stdout: "cancelled", stderr: "" }
+      }
+      promptCalls += 1
+      if (promptCalls === 1) return { stdout: "not json", stderr: "" }
+      throw new OperationalError("timeout", "repair expired")
+    }
+
+    await assert.rejects(
+      requestReview({
+        agent: "pi",
+        prompt: "review",
+        timeoutSeconds: 60,
+        cwd: "/repo",
+        runAcpx,
+        createSessionName: () => "named",
+      }),
+      (error: unknown) =>
+        error instanceof OperationalError &&
+        error.reason === "agent_cli_failed" &&
+        /repair attempt did not complete/.test(error.message) &&
+        /Raw output:\nnot json/.test(error.message),
+    )
+    assert.equal(promptCalls, 2)
+    assert.equal(cancelCalls, 1)
   })
 
   test("preserves an acpx timeout while cooperatively cancelling the session", async () => {

@@ -23,6 +23,7 @@ export const REVIEWER_COMMANDS = {
 } as const satisfies Record<AgentName, string>
 
 const MAX_PARSE_ATTEMPTS = 2
+const MIN_PARSE_REPAIR_MS = 30_000
 const TIMEOUT_CANCEL_GRACE_MS = 5_000
 
 class ReviewDeadlineError extends OperationalError {
@@ -112,50 +113,75 @@ export async function requestReview(options: {
     }
 
     let currentPrompt = prompt
-    let lastOutput = ""
-    let lastError = ""
+    let parseFailure:
+      | { attempts: number; message: string; rawOutput: string }
+      | undefined
     for (let attempt = 1; attempt <= MAX_PARSE_ATTEMPTS; attempt += 1) {
-      const promptArgs = [
-        "--cwd",
-        cwd,
-        "--format",
-        "quiet",
-        "--approve-all",
-        "--suppress-reads",
-      ]
-      if (model !== undefined) promptArgs.push("--model", model)
-      promptArgs.push(
-        "--timeout",
-        String(Math.max(1, Math.ceil(remainingMs(deadline) / 1_000))),
-        ...agentSelectionArgs(agent),
-        "prompt",
-        "-s",
-        sessionId,
-        "-f",
-        "-",
-      )
+      let result: CommandResult
+      try {
+        const commandBudgetMs = remainingMs(deadline)
+        const promptArgs = [
+          "--cwd",
+          cwd,
+          "--format",
+          "quiet",
+          "--approve-all",
+          "--suppress-reads",
+        ]
+        if (model !== undefined) promptArgs.push("--model", model)
+        promptArgs.push(
+          "--timeout",
+          String(Math.max(1, Math.ceil(commandBudgetMs / 1_000))),
+          ...agentSelectionArgs(agent),
+          "prompt",
+          "-s",
+          sessionId,
+          "-f",
+          "-",
+        )
 
-      const result = await runAcpx(
-        promptArgs,
-        currentPrompt,
-        remainingMs(deadline),
-      )
-      lastOutput = result.stdout
+        result = await runAcpx(promptArgs, currentPrompt, commandBudgetMs)
+      } catch (error) {
+        if (
+          parseFailure !== undefined &&
+          error instanceof OperationalError &&
+          error.reason === "timeout"
+        ) {
+          await cancelTimedOutReview({ agent, sessionId, cwd, runAcpx })
+          throw malformedReviewError(
+            agent,
+            parseFailure,
+            "The structured-output repair attempt did not complete before the round deadline.",
+          )
+        }
+        throw error
+      }
+
       try {
         const review = normalizeReview(parseJsonObject(result.stdout))
         return { ...review, session_id: sessionId }
       } catch (error) {
-        lastError = errorMessage(error)
+        parseFailure = {
+          attempts: attempt,
+          message: errorMessage(error),
+          rawOutput: result.stdout,
+        }
       }
 
-      if (attempt < MAX_PARSE_ATTEMPTS)
-        currentPrompt = buildRepairPrompt(lastError)
+      if (attempt === MAX_PARSE_ATTEMPTS)
+        throw malformedReviewError(agent, parseFailure)
+
+      if (millisecondsUntil(deadline) < MIN_PARSE_REPAIR_MS) {
+        throw malformedReviewError(
+          agent,
+          parseFailure,
+          `The structured-output repair attempt was skipped because fewer than ${MIN_PARSE_REPAIR_MS / 1_000} seconds remained.`,
+        )
+      }
+      currentPrompt = buildRepairPrompt(parseFailure.message)
     }
 
-    throw new OperationalError(
-      "agent_cli_failed",
-      `Agent '${agent}' returned malformed structured output after ${MAX_PARSE_ATTEMPTS} attempts: ${lastError}\nRaw output:\n${lastOutput}`,
-    )
+    throw new Error("Unreachable parse-attempt state")
   } catch (error) {
     if (error instanceof OperationalError && error.reason === "timeout") {
       await cancelTimedOutReview({ agent, sessionId, cwd, runAcpx })
@@ -365,8 +391,25 @@ function agentSelectionArgs(agent: AgentName): string[] {
   return ["--agent", REVIEWER_COMMANDS[agent]]
 }
 
+function malformedReviewError(
+  agent: AgentName,
+  failure: { attempts: number; message: string; rawOutput: string },
+  detail?: string,
+): OperationalError {
+  const attempts = `${failure.attempts} attempt${failure.attempts === 1 ? "" : "s"}`
+  const suffix = detail === undefined ? "" : `\n${detail}`
+  return new OperationalError(
+    "agent_cli_failed",
+    `Agent '${agent}' returned malformed structured output after ${attempts}: ${failure.message}\nRaw output:\n${failure.rawOutput}${suffix}`,
+  )
+}
+
+function millisecondsUntil(deadline: number): number {
+  return Math.max(0, Math.ceil(deadline - performance.now()))
+}
+
 function remainingMs(deadline: number): number {
-  const remaining = Math.ceil(deadline - performance.now())
+  const remaining = millisecondsUntil(deadline)
   if (remaining <= 0)
     throw new ReviewDeadlineError("The review exceeded its deadline.")
   return remaining

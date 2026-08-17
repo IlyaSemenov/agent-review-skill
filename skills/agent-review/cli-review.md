@@ -60,8 +60,8 @@ Keep referenced review files under the review working directory because the `acp
 
 ## Timeouts and operational errors
 
-The helper gives the entire round, including a possible JSON-repair retry, a 600-second wall-clock budget by default.
-Use `--timeout-seconds` only to change the real review budget.
+The helper gives the entire round, including a possible JSON-repair retry, a 900-second wall-clock budget by default.
+Use `--timeout-seconds` only when the user explicitly requested a different real review budget.
 
 If a sandboxed launch returns `auth_unavailable`, rerun the same helper command with the required escalation before diagnosing reviewer authentication.
 If it returns `dependency_unavailable`, allow `npx` network access and rerun the same command.
@@ -69,6 +69,7 @@ If a background launch returns a false timeout, rerun the same command in the fo
 
 Stop the review loop when the helper returns `kind: operational_error`.
 Report its reason and message instead of treating it as review feedback.
+When its reason is `timeout`, do not retry with a larger budget; let the user decide whether to diagnose the reviewer or start another review.
 
 ## Output contract
 
