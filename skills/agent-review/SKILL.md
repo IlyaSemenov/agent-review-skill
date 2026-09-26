@@ -24,7 +24,7 @@ If neither user relay nor a CLI reviewer is named, or the choice is ambiguous, a
 Available review agents, by their `--agent` identifier:
 
 - `claude` (Claude Code).
-- `codex` (Codex).
+- `codex` (Codex) — read [Codex reviewer guidance](reviewers/codex.md).
 - `opencode` (OpenCode) — read [OpenCode reviewer guidance](reviewers/opencode.md).
 - `pi` (pi) — read [pi reviewer guidance](reviewers/pi.md).
 
