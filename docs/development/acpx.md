@@ -9,6 +9,7 @@ Keep the exact ACP client package specifier in `ACPX_PACKAGE` in `scripts/agent_
 Keep each reviewer's exact command in `REVIEWER_COMMANDS` and pass it through the Unix-only `acpx --agent` override instead of a built-in agent alias.
 Build named-session prompt invocations with the explicit `prompt` subcommand before session flags because raw `--agent` invocations do not expose those flags on the top-level command.
 Recheck live adapter behavior whenever the client or an adapter pin changes.
+When updating all npm dependencies, include the runtime pins in `ACPX_PACKAGE` and `REVIEWER_COMMANDS`.
 
 Use a persistent named `acpx` session as the helper's `session_id` and continue it through `--resume-session-id`.
 Use the same exact reviewer command for session creation, prompts, configuration, cancellation, failure cleanup, and resume because the command is part of the `acpx` session scope key.

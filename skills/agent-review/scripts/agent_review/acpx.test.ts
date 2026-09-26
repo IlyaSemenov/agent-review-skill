@@ -23,10 +23,10 @@ function validPayload() {
 describe("acpx orchestration", () => {
   test("uses an exact adapter command for every reviewer", () => {
     assert.deepEqual(REVIEWER_COMMANDS, {
-      claude: "npx -y @agentclientprotocol/claude-agent-acp@0.60.0",
-      codex: "npx -y @agentclientprotocol/codex-acp@1.3.0",
-      opencode: "npx -y opencode-ai@1.18.18 acp",
-      pi: "npx -y pi-acp@0.0.33",
+      claude: "npx -y @agentclientprotocol/claude-agent-acp@0.81.2",
+      codex: "npx -y @agentclientprotocol/codex-acp@1.13.1",
+      opencode: "npx -y opencode-ai@1.18.32 acp",
+      pi: "npx -y pi-acp@0.0.34",
     })
   })
 

@@ -11,15 +11,15 @@ import {
   type Review,
 } from "./core.ts"
 
-export const ACPX_PACKAGE = "acpx@0.13.0"
+export const ACPX_PACKAGE = "acpx@0.19.3"
 export const AVAILABLE_AGENTS = ["claude", "codex", "opencode", "pi"] as const
 export type AgentName = (typeof AVAILABLE_AGENTS)[number]
 
 export const REVIEWER_COMMANDS = {
-  claude: "npx -y @agentclientprotocol/claude-agent-acp@0.60.0",
-  codex: "npx -y @agentclientprotocol/codex-acp@1.3.0",
-  opencode: "npx -y opencode-ai@1.18.18 acp",
-  pi: "npx -y pi-acp@0.0.33",
+  claude: "npx -y @agentclientprotocol/claude-agent-acp@0.81.2",
+  codex: "npx -y @agentclientprotocol/codex-acp@1.13.1",
+  opencode: "npx -y opencode-ai@1.18.32 acp",
+  pi: "npx -y pi-acp@0.0.34",
 } as const satisfies Record<AgentName, string>
 
 const MAX_PARSE_ATTEMPTS = 2
