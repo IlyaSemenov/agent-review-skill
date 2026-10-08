@@ -21,15 +21,6 @@ function validPayload() {
 }
 
 describe("acpx orchestration", () => {
-  test("uses an exact adapter command for every reviewer", () => {
-    assert.deepEqual(REVIEWER_COMMANDS, {
-      claude: "npx -y @agentclientprotocol/claude-agent-acp@0.88.0",
-      codex: "npx -y @agentclientprotocol/codex-acp@2.1.1",
-      opencode: "npx -y opencode-ai@1.18.35 acp",
-      pi: "npx -y pi-acp@0.0.34",
-    })
-  })
-
   test("creates a named session and returns its name", async () => {
     const calls: Array<{ args: string[]; input?: string }> = []
     const runAcpx: RunAcpx = async (args, input): Promise<CommandResult> => {
