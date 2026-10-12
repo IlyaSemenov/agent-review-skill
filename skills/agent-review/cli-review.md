@@ -65,7 +65,6 @@ Use `--timeout-seconds` only when the user explicitly requested a different real
 
 If a sandboxed launch returns `auth_unavailable`, rerun the same helper command with the required escalation before diagnosing reviewer authentication.
 If it returns `dependency_unavailable`, allow `npx` network access and rerun the same command.
-If a background launch returns a false timeout, rerun the same command in the foreground before changing the helper timeout.
 
 Stop the review loop when the helper returns `kind: operational_error`.
 Report its reason and message instead of treating it as review feedback.

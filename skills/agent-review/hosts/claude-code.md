@@ -2,21 +2,18 @@
 
 Apply these rules only when you (the host agent) are Claude Code.
 
-## Always run the helper in the foreground
+## Run the helper as a background task
 
-Run the helper command in the foreground, never with `run_in_background`.
-This applies to every round, including `--resume-session-id` rounds.
-Foreground execution keeps the Bash invocation attached to the active review and makes its final status observable before the host continues.
+Run every helper round, including `--resume-session-id` rounds, as one Bash call with `run_in_background: true`.
+The helper's default budget exceeds the foreground Bash timeout ceiling, while a background task runs until the helper returns.
 
-Set the Bash tool `timeout` above the helper's budget (e.g. `930000` for the default budget).
-The default Bash timeout is usually shorter than the helper's own `--timeout-seconds` budget, so a foreground review that legitimately runs that long can be killed by the Bash tool before the helper returns.
-This is the Bash tool's limit, distinct from `--timeout-seconds` below.
+After launching, tell the user that the round is running and wait for the task-completion notification.
+Do not poll the task, and do not launch the round through a subagent.
+When the notification arrives, read the helper JSON from the task output file.
 
-## When you hit a `timeout`
+Do not lower `--timeout-seconds` to fit a Bash timeout.
 
-A Bash tool timeout is a launch problem, not a reviewer result, so do not report "reviewer couldn't finish" or debug the helper without checking the launch mode.
-Handle launch-layer timeouts separately from a helper JSON response whose reason is `timeout`:
+## When the round fails
 
-- **Ran in the background** — rerun the exact same command in the foreground before diagnosing the helper or reviewer.
-- **Bash tool killed it at its default timeout** while it ran in the foreground — raise the Bash tool `timeout` to cover the helper's budget, not `--timeout-seconds`.
+- **The task exited without helper JSON** — report it as a launch failure with the task output, not as a reviewer result.
 - **The helper returned `reason: timeout`** — stop the review without raising `--timeout-seconds` or retrying automatically, and let the user decide what to do next.
