@@ -1,14 +1,8 @@
 import assert from "node:assert/strict"
 import { describe, test } from "node:test"
 
-import { ACPX_PACKAGE, type RunAcpx } from "./acpx.ts"
-import {
-  DEFAULT_TIMEOUT_SECONDS,
-  MAX_TIMEOUT_SECONDS,
-  main,
-  parseArgs,
-  validateArgs,
-} from "./cli.ts"
+import type { LoadReviewer } from "./agentex.ts"
+import { MAX_TIMEOUT_SECONDS, main, parseArgs, validateArgs } from "./cli.ts"
 import { OperationalError } from "./core.ts"
 
 function validPayload() {
@@ -35,10 +29,6 @@ function captureOutput(): {
 }
 
 describe("CLI argument contract", () => {
-  test("uses one 900-second default review budget", () => {
-    assert.equal(DEFAULT_TIMEOUT_SECONDS, 900)
-  })
-
   test("parses supported options", () => {
     assert.deepEqual(
       parseArgs([
@@ -84,14 +74,6 @@ describe("CLI argument contract", () => {
     )
   })
 
-  test("rejects reasoning for OpenCode", () => {
-    assert.throws(
-      () =>
-        validateArgs({ agent: "opencode", iteration: 1, reasoning: "high" }),
-      new RegExp(`not supported.*${ACPX_PACKAGE.replace(".", "\\.")}`),
-    )
-  })
-
   test("rejects CLI-only options for user relay", () => {
     assert.throws(
       () => validateArgs({ agent: "manual", iteration: 1, model: "x" }),
@@ -127,8 +109,8 @@ describe("main", () => {
       stdin: "Review src/auth.ts",
       randomToken: () => "a1b2c3d4",
       writeStdout: capture.write,
-      runAcpx: async () => {
-        throw new Error("manual must not invoke acpx")
+      loadReviewer: async () => {
+        throw new Error("manual must not invoke a reviewer")
       },
     })
     assert.equal(exitCode, 0)
@@ -151,23 +133,26 @@ describe("main", () => {
 
   test("emits normalized Unicode JSON for a CLI review", async () => {
     const capture = captureOutput()
-    const runAcpx: RunAcpx = async (args) => {
-      if (args.includes("sessions")) return { stdout: "record", stderr: "" }
-      return {
-        stdout: JSON.stringify({
+    const loadReviewer: LoadReviewer = async () => async () => ({
+      sessionId: "native",
+      send: async () => ({
+        summary: JSON.stringify({
           ...validPayload(),
           approval_reason: "Всё хорошо",
         }),
-        stderr: "",
-      }
-    }
+        costUsd: null,
+        status: "completed",
+        errorCode: null,
+        errorMessage: null,
+      }),
+      close: async () => {},
+    })
     const exitCode = await main({
       argv: ["--agent", "codex", "--iteration", "1"],
       stdin: "Review src/auth.ts",
       cwd: "/repo",
-      createSessionName: () => "named",
       writeStdout: capture.write,
-      runAcpx,
+      loadReviewer,
     })
     assert.equal(exitCode, 0)
     assert.match(capture.output(), /Всё хорошо/)
@@ -177,7 +162,7 @@ describe("main", () => {
   test("emits operational errors as JSON", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "opencode", "--iteration", "1", "--reasoning", "high"],
+      argv: ["--agent", "manual", "--iteration", "1", "--reasoning", "high"],
       stdin: "Review X",
       writeStdout: capture.write,
     })
@@ -185,20 +170,20 @@ describe("main", () => {
     assert.deepEqual(JSON.parse(capture.output()), {
       kind: "operational_error",
       reason: "invalid_input",
-      message: `--reasoning is not supported for --agent opencode through ${ACPX_PACKAGE}.`,
+      message: "--reasoning cannot be used with --agent manual",
     })
   })
 
   test("surfaces timeouts with the configured budget", async () => {
     const capture = captureOutput()
-    const runAcpx: RunAcpx = async () => {
+    const loadReviewer: LoadReviewer = async () => {
       throw new OperationalError("timeout", "expired")
     }
     const exitCode = await main({
       argv: ["--agent", "codex", "--iteration", "1", "--timeout-seconds", "7"],
       stdin: "Review X",
       writeStdout: capture.write,
-      runAcpx,
+      loadReviewer,
     })
     assert.equal(exitCode, 1)
     assert.equal(JSON.parse(capture.output()).timeout_seconds, 7)

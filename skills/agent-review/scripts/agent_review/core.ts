@@ -1,5 +1,5 @@
 export const HOST_RESPONSE_MARKER = "=== AGENT_REVIEW_RESPONSE ==="
-export const ISSUE_KEYS = [
+const ISSUE_KEYS = [
   "id",
   "title",
   "severity",
@@ -137,7 +137,7 @@ export function buildPrompt(options: {
   return `${sections.join("\n")}\n`
 }
 
-export function describeSchema(): string {
+function describeSchema(): string {
   return [
     `- verdict: one of ${VERDICTS.join(", ")}`,
     `- issues: array of objects, each with exactly: ${ISSUE_KEYS.join(", ")}`,

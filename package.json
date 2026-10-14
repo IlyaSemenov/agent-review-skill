@@ -10,6 +10,7 @@
     "types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@agentex/agent": "0.0.45",
     "@biomejs/biome": "^2.5.14",
     "@tsconfig/bun": "^1.0.11",
     "@types/bun": "^1.4.2",

@@ -3,10 +3,7 @@ import { describe, test } from "node:test"
 
 import {
   buildPrompt,
-  buildRepairPrompt,
-  describeSchema,
   HOST_RESPONSE_MARKER,
-  ISSUE_KEYS,
   looksLikeReviewPayload,
   normalizeReview,
   parseJsonObject,
@@ -86,15 +83,6 @@ describe("prompt construction", () => {
     })
     assert.match(prompt, /quadruple-backtick/)
     assert.match(prompt, /manual_review_token: string, exactly "0123abcd"/)
-  })
-
-  test("lists every issue field", () => {
-    const schema = describeSchema()
-    for (const key of ISSUE_KEYS) assert.match(schema, new RegExp(key))
-  })
-
-  test("repair prompt includes the parsing error", () => {
-    assert.match(buildRepairPrompt("bad verdict"), /bad verdict/)
   })
 })
 

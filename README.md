@@ -34,8 +34,8 @@ Use $agent-review with codex to review the changes in src/reviewer.py and tell m
 The same reviewer is used for every round of a review; a session belongs to one agent, so the loop does not switch agents midway.
 
 You can optionally ask for a specific model or reasoning level, such as "review with codex on gpt-5.5, high reasoning".
-Requested values are forwarded through ACP, while omitted values are left to the reviewer's configured defaults.
-OpenCode currently supports model selection but not an explicit reasoning level through ACP.
+Requested values are forwarded to the reviewer's own CLI options, while omitted values are left to the reviewer's configured defaults.
+For OpenCode, the reasoning level is passed as the model variant.
 
 To review via user relay, ask for `user relay` instead of naming a CLI reviewer.
 The host agent gives you a prompt to send to any reviewer and accepts the pasted feedback with or without JSON.
@@ -50,24 +50,26 @@ Use $agent-review with user relay to review this plan.
 ## Requirements
 
 - Node.js 22.18 or newer
-- `npx` on your `PATH`
+- `npm` on your `PATH`
+- the selected reviewer's CLI (`claude`, `codex`, `opencode`, or `pi`) installed and on your `PATH`
 - macOS or Linux for review via CLI
-- network access on the first CLI review so `npx` can fetch the exact `acpx` client and the selected ACP adapter
+- on Linux, `bubblewrap` and `socat` for the Claude Code reviewer's sandbox
+- network access on the first CLI review so the helper can install its runtime dependencies
 - authentication for the selected reviewer in its normal local environment
 
 ## How It Works
 
 The [review helper](skills/agent-review/scripts/agent_review.ts) is a thin executable entrypoint for an agent-agnostic TypeScript orchestrator executed directly by Node.js.
-Its implementation separates the review contract, ACP transport, and CLI composition in [`scripts/agent_review/`](skills/agent-review/scripts/agent_review/).
+Its implementation separates the review contract, reviewer transport, runtime dependency installation, and CLI composition in [`scripts/agent_review/`](skills/agent-review/scripts/agent_review/).
 It runs one review round per invocation; the calling agent drives the loop.
 
-For CLI review, it launches the pinned `acpx` client through `npx` and uses a persistent named ACP session.
+For CLI review, it drives the reviewer's native CLI through [`@agentex/agent`](https://github.com/dynamismlabs/agentex/tree/main/packages/agent) and continues the reviewer's own session in later rounds.
 With `--agent manual`, the same orchestrator builds the reviewer prompt without launching another process.
 
 Each invocation:
 
 - builds reviewer instructions for a concrete subject
-- invokes the selected reviewer and returns structured feedback plus an `acpx` session name when reviewing via CLI
+- invokes the selected reviewer and returns structured feedback plus the reviewer's session id when reviewing via CLI
 - prints a prompt for the user to relay when reviewing via user relay
 
 Between rounds, the calling agent:
@@ -90,13 +92,14 @@ When the review subject is large but not already materialized as a project file,
 
 - The skill is explicit-only.
   It should run when you ask for it, not implicitly.
-- The first CLI review may take longer while `npx` downloads and caches `acpx` and the selected ACP adapter.
-- The `acpx` client and every reviewer adapter are pinned to exact versions.
+- The first CLI review may take longer while the helper installs its locked runtime dependencies into `~/.cache/agent-review`.
+- Runtime dependencies are pinned by a lockfile; the reviewer CLIs are the versions installed on your machine.
 - In sandboxed environments, the reviewer's login may be unavailable even when it works in your normal shell.
   In that case, the agent may need to rerun the helper with escalation.
 - The skill treats every CLI reviewer as a user-selected trusted local agent.
-  Reviewers run noninteractively through ACP with every local tool permission request approved, so they can execute commands and modify project files.
-  The review-only prompt is a behavioral contract rather than a uniform security boundary.
+  Codex reviewers run in a read-only sandbox and cannot write any files.
+  Claude Code reviewers have only read, shell, and web tools, and their shell commands run in Claude Code's sandbox, which blocks writes to the project; your own Claude Code sandbox exceptions still apply.
+  OpenCode and pi reviewers run noninteractively with every local tool permission approved, so they can execute commands and modify project files; for them the review-only prompt is a behavioral contract rather than a security boundary.
 - The helper gives each CLI round a 900-second wall-clock budget.
 
 ## Development

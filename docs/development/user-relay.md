@@ -6,7 +6,7 @@ Keep runtime steps and examples in `skills/agent-review/user-relay.md`; do not d
 
 ## Invariants
 
-Treat `manual` as a user-relay transport, not as an acpx transport: it owns no reviewer process or session.
+Treat `manual` as a user-relay transport, not as an agentex transport: it owns no reviewer process or session.
 Keep user relay host- and reviewer-agnostic and never present it as a fallback for a particular CLI reviewer.
 Allow later rounds without a session id because conversation continuity belongs to the user-managed reviewer session.
 

@@ -9,7 +9,7 @@ Read [User-relay development](user-relay.md) for invariants unique to `--agent m
 
 Keep the transport-independent review contract in `core.ts`: stdin parsing, prompt construction, JSON extraction, normalization, and parse-repair prompts.
 Keep argument parsing, validation, standard I/O, normalized output, and top-level composition in `cli.ts`.
-Keep ACP sessions, the round deadline, retries, timeout cancellation, process execution, and transport failure classification in `acpx.ts`.
+Keep reviewer sessions, the round deadline, retries, and transport failure classification in `agentex.ts`, and runtime dependency installation in `runtime.ts`.
 
 ## Round contract
 
@@ -28,12 +28,14 @@ Use the literal `=== AGENT_REVIEW_RESPONSE ===` marker to separate optional new 
 Reject empty input and round-1 response bundles.
 Require `--resume-session-id` for CLI follow-ups but not for `--agent manual`.
 
-Apply one wall-clock deadline to session creation, ACP configuration, the review prompt, and the single parse-repair retry.
+Apply one wall-clock deadline to runtime dependency installation, reviewer session startup, the review prompt, and the single parse-repair retry.
+Treat it as a bound on waiting: accept a turn that completes within the transport's timeout grace period instead of discarding a finished review.
 Start the parse-repair retry only when at least 30 seconds remain in that same deadline.
 After malformed reviewer output, preserve `agent_cli_failed` with the parse error and raw output even when the repair attempt cannot start or times out.
-After a timeout, make one bounded best-effort ACP cancellation before returning the operational error.
-After any failed first round, make one bounded best-effort close of the session created by that invocation; never close a resumed session automatically.
-Return the persistent `acpx` session name in normalized CLI output.
+Send the parse-repair retry to the same reviewer session.
+After every round, make one bounded best-effort close of the reviewer session object; the reviewer conversation stays resumable.
+After printing the result, allow agentex 10 seconds to finish its own kill escalation, then exit the helper so a reviewer process that outlives its closed session cannot keep it running.
+Return the reviewer's native session id in normalized CLI output.
 
 ## Host-specific behavior
 

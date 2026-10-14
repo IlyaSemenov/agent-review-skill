@@ -14,13 +14,13 @@ That confirmation covers later rounds of the same session.
 Show, verbatim:
 
 - the exact helper command you will run (including `--agent` and any user-requested `--model` or `--reasoning` flag), and
-- the confirmation wording the user needs to give for you to request escalation — that they explicitly authorize sending this review input to the reviewer and auto-approving all of the reviewer's local tool permission requests.
+- the confirmation wording the user needs to give for you to request escalation — that they explicitly authorize sending this review input to the reviewer and, for OpenCode and pi, auto-approving all of the reviewer's local tool permission requests.
 
 Put the exact helper command alone in a fenced code block and close the fence immediately after the command or heredoc terminator.
 Ask the user to reply with the confirmation wording, and put that wording alone in a separate fenced code block.
 
 Once the user gives that confirmation, request the sandbox escalation and run the exact command shown.
-This grants the reviewer all permissions requested through `acpx` in addition to making the host escalation explicit and auditable.
+For OpenCode and pi, this grants the reviewer all of its local tool permissions in addition to making the host escalation explicit and auditable.
 
 ## Track yielded helper commands
 

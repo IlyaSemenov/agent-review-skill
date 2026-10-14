@@ -4,7 +4,7 @@ In this path, the user carries messages between the host and reviewer conversati
 Use `--agent manual`, which emits a prompt without selecting or launching a reviewer CLI.
 
 Pass `--agent manual`, `--iteration`, and an optional explicit `--max-iterations` only.
-The helper prints a reviewer prompt and exits without invoking `acpx` or another reviewer process.
+The helper prints a reviewer prompt and exits without invoking a reviewer process.
 
 ## Run round 1
 

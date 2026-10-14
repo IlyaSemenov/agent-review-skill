@@ -5,10 +5,9 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import {
   type AgentName,
   AVAILABLE_AGENTS,
-  type RunAcpx,
+  type LoadReviewer,
   requestReview,
-  validateAgentOptions,
-} from "./acpx.ts"
+} from "./agentex.ts"
 import {
   buildPrompt,
   errorMessage,
@@ -16,7 +15,7 @@ import {
   parseStdinPayload,
 } from "./core.ts"
 
-export const DEFAULT_TIMEOUT_SECONDS = 900
+const DEFAULT_TIMEOUT_SECONDS = 900
 export const MAX_TIMEOUT_SECONDS = Math.floor(2_147_483_647 / 1_000)
 
 const MANUAL_AGENT = "manual"
@@ -40,7 +39,7 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
   ) {
     throw new OperationalError(
       "invalid_input",
-      "--add-dir is not supported by the acpx CLI transport; keep review material under the review working directory.",
+      "--add-dir is not supported; keep review material under the review working directory.",
     )
   }
 
@@ -159,8 +158,6 @@ export function validateArgs(args: CliArgs): void {
         `${used[0]} cannot be used with --agent manual`,
       )
     }
-  } else {
-    validateAgentOptions(args.agent, { reasoning: args.reasoning })
   }
 }
 
@@ -169,9 +166,8 @@ export async function main(
     argv?: string[]
     stdin?: string
     cwd?: string
-    runAcpx?: RunAcpx
+    loadReviewer?: LoadReviewer
     randomToken?: () => string
-    createSessionName?: () => string
     writeStdout?: (text: string) => void
   } = {},
 ): Promise<number> {
@@ -240,8 +236,7 @@ export async function main(
       model: args.model,
       reasoning: args.reasoning,
       cwd: dependencies.cwd ?? process.cwd(),
-      runAcpx: dependencies.runAcpx,
-      createSessionName: dependencies.createSessionName,
+      loadReviewer: dependencies.loadReviewer,
     })
     writeStdout(`${JSON.stringify(review, undefined, 2)}\n`)
     return 0

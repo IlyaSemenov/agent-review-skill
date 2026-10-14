@@ -24,13 +24,13 @@ If neither user relay nor a CLI reviewer is named, or the choice is ambiguous, a
 Available review agents, by their `--agent` identifier:
 
 - `claude` (Claude Code).
-- `codex` (Codex) — read [Codex reviewer guidance](reviewers/codex.md).
+- `codex` (Codex).
 - `opencode` (OpenCode) — read [OpenCode reviewer guidance](reviewers/opencode.md).
 - `pi` (pi) — read [pi reviewer guidance](reviewers/pi.md).
 
 Map a naturally named reviewer to the identifier on the left.
 Pass the selected identifier, or `manual`, through the required `--agent` flag on every round.
-CLI review requires Node.js 22.18 or newer, `npx`, first-run network access, and authentication for the selected reviewer in its normal local environment.
+CLI review requires Node.js 22.18 or newer, `npm`, first-run network access, the selected reviewer's CLI on `PATH`, and its authentication in the normal local environment.
 
 ## Select host guidance
 
