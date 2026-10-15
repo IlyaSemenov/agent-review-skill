@@ -47,7 +47,7 @@ Review only a clearly identified subject from context, such as a diff, plan, des
 In Plan Mode, use the current plan text as the subject.
 If multiple targets are plausible or the request is underspecified, ask what to review.
 
-State both the subject and the desired focus, such as missing decisions, correctness risks, scope control, code quality, or implementation gaps.
+State the subject and compose the review focus according to [Review focus](review-focus.md).
 
 For repository changes reviewed via CLI, instruct the reviewer to run the exact diff command rather than pasting a captured diff.
 For a working-tree review, also instruct the reviewer to run `git status --short` and inspect every in-scope untracked file.

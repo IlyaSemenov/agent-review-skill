@@ -217,6 +217,7 @@ export async function main(
     iteration: args.iteration,
     reviewInput,
     hostResponse,
+    finalRound: args.iteration === args.maxIterations,
     manualRoundToken: manual
       ? (dependencies.randomToken ?? (() => randomBytes(4).toString("hex")))()
       : undefined,

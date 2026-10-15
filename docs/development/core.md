@@ -17,6 +17,11 @@ Build a full prompt only for round 1 and delta-only prompts while the reviewer c
 Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
 Limit later prompts to the host response, new review scope, and per-round values that changed.
 
+Keep review criteria in the runtime focus document, which the host adapts and sends as review input.
+Keep in the prompt only what holds for any focus: the reviewer role, the read-only rule, issue quality rules, severity definitions, and the response contract.
+Have the reviewer withhold the low-severity issues it found while higher-severity issues remain open, and set `deferred_polish` only when it actually withholds one.
+Mark the round at an explicit `--max-iterations` limit as final, so the reviewer reports withheld issues in it.
+
 Keep `--iteration` as technical state that selects the prompt shape.
 Enforce `--max-iterations` only when the user supplied an explicit hard limit; keep soft loop budgeting in runtime instructions.
 

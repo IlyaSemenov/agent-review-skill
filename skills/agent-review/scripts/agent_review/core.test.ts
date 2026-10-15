@@ -16,6 +16,7 @@ function validPayload() {
     issues: [],
     open_questions: [],
     loop_signal: false,
+    deferred_polish: false,
     approval_reason: "looks good",
   }
 }
@@ -73,6 +74,22 @@ describe("prompt construction", () => {
     assert.match(prompt, /New review input:/)
     assert.doesNotMatch(prompt, /host agent's work/)
     assert.doesNotMatch(prompt, /approval_reason:/)
+  })
+
+  test("marks the final round in both prompt shapes", () => {
+    for (const iteration of [1, 2]) {
+      const prompt = buildPrompt({
+        iteration,
+        reviewInput: "Review X",
+        hostResponse: iteration === 1 ? undefined : "Fixed X",
+        finalRound: true,
+      })
+      assert.match(prompt, /final review round/)
+    }
+    assert.doesNotMatch(
+      buildPrompt({ iteration: 2, hostResponse: "Fixed X" }),
+      /final review round/,
+    )
   })
 
   test("adds a quoted relay token", () => {
@@ -136,6 +153,10 @@ describe("JSON extraction and normalization", () => {
     assert.throws(
       () => normalizeReview({ ...validPayload(), loop_signal: "false" }),
       /loop_signal/,
+    )
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), deferred_polish: undefined }),
+      /deferred_polish/,
     )
     assert.throws(
       () =>

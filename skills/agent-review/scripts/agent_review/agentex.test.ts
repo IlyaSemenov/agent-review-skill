@@ -25,6 +25,7 @@ function validPayload() {
     issues: [],
     open_questions: [],
     loop_signal: false,
+    deferred_polish: false,
     approval_reason: "looks good",
   }
 }

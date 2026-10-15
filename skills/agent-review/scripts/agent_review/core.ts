@@ -12,6 +12,7 @@ const OUTPUT_KEYS = [
   "issues",
   "open_questions",
   "loop_signal",
+  "deferred_polish",
   "approval_reason",
 ] as const
 const VERDICTS = ["approve", "needs_changes", "discuss"] as const
@@ -28,6 +29,7 @@ export type Review = {
   }>
   open_questions: string[]
   loop_signal: boolean
+  deferred_polish: boolean
   approval_reason: string
 }
 
@@ -74,16 +76,19 @@ export function buildPrompt(options: {
   reviewInput?: string
   hostResponse?: string
   manualRoundToken?: string
+  finalRound?: boolean
 }): string {
-  const { iteration, reviewInput, hostResponse, manualRoundToken } = options
+  const { iteration, reviewInput, hostResponse, manualRoundToken, finalRound } =
+    options
   const initialRound = iteration === 1
   const sections = initialRound
     ? [
         "You are reviewing the host agent's work as a peer reviewer, not as the final authority.",
-        "Your job is to find blind spots, weak assumptions, correctness risks, or unnecessary complexity in the supplied review material.",
+        "Your job is to find what the host agent missed, following the review focus stated in the review input.",
         "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
         "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
-        "Focus on the few highest-value issues.",
+        "Formal correctness is not enough: work without an obvious bug is still an issue when it implements a harmful decision, a footgun, or an objectively worse design.",
+        "Raise an alternative design only when it has a concrete advantage; an equally good alternative is not an issue.",
         "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",
       ]
     : []
@@ -104,7 +109,11 @@ export function buildPrompt(options: {
     )
   }
 
+  const finalRoundInstruction =
+    "This is the final review round: report every remaining issue, including low-severity ones, and set deferred_polish=false."
+
   if (!initialRound) {
+    if (finalRound) sections.push("", finalRoundInstruction)
     if (manualRoundToken !== undefined) {
       sections.push(
         "",
@@ -127,13 +136,25 @@ export function buildPrompt(options: {
     responseInstruction,
     "It must have exactly these keys:",
     schemaDescription,
-    "Choose verdict=approve only when no actionable issues remain.",
+    "Choose verdict=approve only when no actionable issues remain and deferred_polish=false.",
     "Choose verdict=needs_changes when the artifact should change.",
     "Choose verdict=discuss when the round is mainly about disagreement or clarification.",
     "Set loop_signal=true when you are substantially repeating a contested point or another exchange is unlikely to add useful information.",
-    "Keep issues short and specific. Prefer 0-3 issues unless the artifact is seriously flawed.",
+    "",
+    "Use severity=high when behavior, data, security, or a public contract breaks, or when the approach itself is wrong.",
+    "Use severity=medium for a real cost short of that: a fragile or unclear contract, design debt, an untested real risk, a misleading name or document.",
+    "Use severity=low for local polish: wording, formatting, minor naming, or small consistency fixes.",
+    "Report every high and medium issue.",
+    "Complete every review pass in every round, including passes that find only low issues.",
+    "While any high or medium issue remains open, neither fixed nor settled by a host rejection you accept, withhold the low issues you found; polish is not worth fixing in material that higher-severity fixes may still change.",
+    "Report all remaining low issues once no high or medium issue remains open, and whenever you set loop_signal=true.",
+    "Set deferred_polish=true only when this response withholds at least one low issue you found; otherwise set it to false.",
+    "Group low issues of one kind into a single issue that lists every location.",
+    "In rationale, state the concrete harm. In recommendation, state a concrete change, not general advice.",
+    "Report only issues you still stand behind; omit concerns you dismissed while reviewing.",
     "If there are no issues, return an empty issues array.",
   )
+  if (finalRound) sections.push(finalRoundInstruction)
   return `${sections.join("\n")}\n`
 }
 
@@ -145,6 +166,7 @@ function describeSchema(): string {
     "    - id: a short stable identifier for the issue",
     "- open_questions: array of strings",
     "- loop_signal: boolean",
+    "- deferred_polish: boolean",
     "- approval_reason: string",
   ].join("\n")
 }
@@ -202,6 +224,8 @@ export function normalizeReview(payload: unknown): Review {
   }
   if (typeof payload.loop_signal !== "boolean")
     throw new Error("loop_signal must be a boolean")
+  if (typeof payload.deferred_polish !== "boolean")
+    throw new Error("deferred_polish must be a boolean")
   if (typeof payload.approval_reason !== "string") {
     throw new Error("approval_reason must be a string")
   }
@@ -213,6 +237,7 @@ export function normalizeReview(payload: unknown): Review {
       .map((item) => item.trim())
       .filter(Boolean),
     loop_signal: payload.loop_signal,
+    deferred_polish: payload.deferred_polish,
     approval_reason: payload.approval_reason.trim(),
   }
 }

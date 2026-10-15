@@ -36,11 +36,15 @@ Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
   --agent claude \
   --iteration 1
-Review docs/plan.md and src/reviewer.py. Focus on missing decisions and retry behavior.
+Review docs/plan.md and src/reviewer.py.
+
+Review focus:
+- Missing decisions and retry behavior.
+- <criteria selected according to review-focus.md>
 EOF
 ```
 
-Round-1 stdin is the review subject.
+Round-1 stdin is the review subject and its review focus.
 The helper sends the full reviewer role, rules, subject, and response contract.
 
 ## Resume later rounds
@@ -90,6 +94,7 @@ The helper prints normalized JSON with this shape:
   "issues": [],
   "open_questions": [],
   "loop_signal": false,
+  "deferred_polish": false,
   "approval_reason": "..."
 }
 ```

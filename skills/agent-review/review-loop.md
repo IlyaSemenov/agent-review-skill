@@ -19,6 +19,7 @@ Rewrite vague reviewer titles into concrete maintainer-facing problem statements
 Do not replace the issue list with only a count or a general summary.
 
 If the reviewer raised no issues, say so on one line.
+When `deferred_polish` is true, add one line saying the reviewer withheld low-severity issues until higher-severity ones are resolved.
 This update is informational, not an approval request.
 
 Continue the review without waiting unless the user interrupts.
@@ -57,6 +58,7 @@ Rejected: the proposed lock is redundant.
 ```
 
 Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
+Do not stop because no actionable issues remain while `deferred_polish` is true; run another round to receive the withheld issues.
 
 Use 10 rounds as a soft working budget when the user did not set a limit.
 Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
@@ -79,6 +81,8 @@ Use one concise line per issue and omit empty groups.
 - **Unresolved** — genuine disagreements that remain for the user to judge.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
+
+If the loop stopped while `deferred_polish` was true, state that low-severity issues were withheld and not reviewed.
 
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
 Omit questions already answered during the loop.

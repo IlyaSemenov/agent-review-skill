@@ -15,7 +15,11 @@ Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
   --agent manual \
   --iteration 1
-Review docs/plan.md and src/reviewer.py. Focus on missing decisions and retry behavior.
+Review docs/plan.md and src/reviewer.py.
+
+Review focus:
+- Missing decisions and retry behavior.
+- <criteria selected according to review-focus.md>
 EOF
 ```
 
@@ -43,10 +47,12 @@ If a present token differs, use the context to determine whether the response is
 If no review JSON can be extracted and authorship is unclear, ask whether the message is from the user or reviewer.
 
 If the message is clearly substantive reviewer feedback but contains no extractable review JSON, treat it as reviewer feedback and infer the issues, questions, and outcome from the prose.
+Treat `deferred_polish` as true for such a response unless the reviewer states that it reported every remaining issue.
 Missing JSON alone does not mean the reviewer lost context.
 
 If the reviewer clearly lost the review subject itself, start a new user-relayed round 1 with the complete current subject and a concise summary of settled issues.
-Keep the issue history and any explicit user-defined round limit across that restart.
+Keep the issue history across that restart.
+Under an explicit user-defined round limit, pass the number of remaining rounds as `--max-iterations` for the restarted conversation.
 
 ## Run later rounds
 
@@ -62,5 +68,5 @@ Rejected: the proposed lock is redundant because the caller already holds it.
 EOF
 ```
 
-The emitted follow-up contains only the host response, optional new scope, and fresh `manual_review_token`.
+The emitted follow-up contains only the host response, optional new scope, the final-round instruction in the round at an explicit limit, and fresh `manual_review_token`.
 Give the complete follow-up prompt to the user for relay into the same reviewer conversation.

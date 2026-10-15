@@ -11,6 +11,7 @@ function validPayload() {
     issues: [],
     open_questions: [],
     loop_signal: false,
+    deferred_polish: false,
     approval_reason: "looks good",
   }
 }
@@ -129,6 +130,18 @@ describe("main", () => {
     assert.equal(exitCode, 0)
     assert.match(capture.output(), /^Host agent response/)
     assert.doesNotMatch(capture.output(), /Review input:/)
+  })
+
+  test("marks the round at --max-iterations as final", async () => {
+    const capture = captureOutput()
+    const exitCode = await main({
+      argv: ["--agent", "manual", "--iteration", "2", "--max-iterations", "2"],
+      stdin: "Accepted: fixed it.",
+      randomToken: () => "e5f6a7b8",
+      writeStdout: capture.write,
+    })
+    assert.equal(exitCode, 0)
+    assert.match(capture.output(), /final review round/)
   })
 
   test("emits normalized Unicode JSON for a CLI review", async () => {
