@@ -56,6 +56,7 @@ Settle remaining disagreements yourself and report them as unresolved.
 Stop when the task is done.
 
 Regardless of YOLO, stop at any stage on a blocker: a decision only the user can make, a hard-to-reverse operation the user has not confirmed, or a required check that keeps failing and you cannot fix.
+When a review issue needs the user's decision, finish the review loop for the other issues, then stop before the next stage or commit.
 The host environment's own plan-approval gates, the reviewer-trust confirmation, user-relay handoffs, and operational errors also apply regardless of YOLO.
 
 At each stop, give the final report from the review loop.

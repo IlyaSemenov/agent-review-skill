@@ -35,18 +35,24 @@ Reject criticism that is mistaken, overspecified, or based on a wrong assumption
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
 
-After checking the issues, but before changing the artifact or starting another round, give the user one concise decision line per issue:
+After checking the issues, but before changing the artifact or starting another round, give the user a decision update with one concise line per issue, grouped by decision in this order:
 
-- `<concrete problem summary> — accepted: <what you will change>`
-- `<concrete problem summary> — rejected: <one-line reason>`
+- **Accepted** — `<concrete problem summary>: <what you will change>`.
+- **Partially accepted** — `<concrete problem summary>: <what you will change>; <what you will not change and why>`.
+- **Rejected** — `<concrete problem summary>: <one-line reason>`.
+- **Needs your decision** — `<concrete problem summary>: <the choice the user must make>`.
+
+Omit empty groups.
+When every issue falls into one group, say so in its heading, such as "Accepted all issues:".
 
 Do not edit the artifact before sending this decision update.
-The decision update is informational, not an approval request.
-Continue immediately with accepted changes unless the user interrupts.
+Apart from the **Needs your decision** group, the decision update is informational, not an approval request.
+Continue immediately with the other issues unless the user interrupts.
+Leave issues that need the user's decision unchanged until the user answers, and list unanswered ones under **Unresolved** in the final report.
 
 ## Prepare another round
 
-Send only accepted points and what changed, plus rejected points and why.
+Send only accepted points and what changed, rejected points and why, and points left for the user to decide.
 Do not resend the original subject or unchanged instructions.
 
 Put the response marker line in every follow-up input, with any new scope above it and the host response below it:
@@ -76,7 +82,7 @@ Use one concise line per issue and omit empty groups.
 
 - **Fixed** — accepted issues applied to the artifact.
 - **Dropped** — withdrawn, mistaken, or disproven issues that need no change.
-- **Unresolved** — genuine disagreements that remain for the user to judge.
+- **Unresolved** — genuine disagreements and unanswered user decisions that remain for the user to judge.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
