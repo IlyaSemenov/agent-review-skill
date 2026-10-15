@@ -14,6 +14,8 @@ One review is a sequence of rounds controlled by the host agent:
 6. If another round is useful, the same reviewer conversation receives only the host's response, relevant changes, and any new scope.
 7. The host stops when further review is not useful and reports the outcome to the user.
 
+When the reviewed subject is a plan that the host then implements, the same reviewer conversation continues with each implemented part before the host commits it.
+
 `scripts/agent_review.ts` implements one round of this process.
 In this documentation, **core** means its transport-independent behavior, while **agentex transport** means the shared CLI-review execution path.
 

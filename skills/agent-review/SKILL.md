@@ -1,6 +1,6 @@
 ---
 name: agent-review
-description: Run a peer CLI agent (Claude Code, Codex, OpenCode, pi), or prepare a reviewer handoff via user relay, to review code, diffs, or plans when explicitly requested by the user or via $agent-review.
+description: Run a peer CLI agent (Claude Code, Codex, OpenCode, pi), or prepare a reviewer handoff via user relay, to review code, diffs, or plans, including a plan through its implementation and commits, when explicitly requested by the user or via $agent-review.
 ---
 
 # Agent Review
@@ -48,6 +48,7 @@ In Plan Mode, use the current plan text as the subject.
 If multiple targets are plausible or the request is underspecified, ask what to review.
 
 State the subject and compose the review focus according to [Review focus](review-focus.md).
+If the subject is a plan that you will implement yourself, also follow [Plan and implementation](plan-and-implementation.md).
 
 For repository changes reviewed via CLI, instruct the reviewer to run the exact diff command rather than pasting a captured diff.
 For a working-tree review, also instruct the reviewer to run `git status --short` and inspect every in-scope untracked file.

@@ -150,6 +150,7 @@ export function buildPrompt(options: {
     "In rationale, state the concrete harm. In recommendation, state a concrete change, not general advice.",
     "Report only issues you still stand behind; omit concerns you dismissed while reviewing.",
     "If there are no issues, return an empty issues array.",
+    "In open_questions, say when a question needs the user's decision rather than the host's.",
   )
   return `${sections.join("\n")}\n`
 }

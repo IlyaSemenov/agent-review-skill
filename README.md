@@ -47,6 +47,14 @@ Each round asks the reviewer to echo a token inside JSON to help catch an accide
 Use $agent-review with user relay to review this plan.
 ```
 
+When the reviewed plan is one your agent will implement, the review continues through the implementation: the same reviewer checks each implemented part, and the agent commits it.
+The agent stops after every commit, and after the plan review when the plan needs your agreement.
+Say "YOLO" to skip these stops; the agent still stops for decisions only you can make.
+
+```text
+Plan this feature, review the plan with $agent-review and codex, then implement it. YOLO.
+```
+
 ## Requirements
 
 - Node.js 22.18 or newer
