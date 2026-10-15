@@ -3,7 +3,7 @@
 In this path, the user carries messages between the host and reviewer conversations.
 Use `--agent manual`, which emits a prompt without selecting or launching a reviewer CLI.
 
-Pass `--agent manual` and `--iteration` only.
+Pass `--agent manual` only, plus `--follow-up` in later rounds.
 The helper prints a reviewer prompt and exits without invoking a reviewer process.
 
 ## Run round 1
@@ -13,8 +13,7 @@ Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper
 
 ```bash
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent manual \
-  --iteration 1
+  --agent manual
 Review docs/plan.md and src/reviewer.py.
 
 Review focus:
@@ -50,18 +49,19 @@ If the message is clearly substantive reviewer feedback but contains no extracta
 Treat `deferred_polish` as true for such a response unless the reviewer states that it reported every remaining issue.
 Missing JSON alone does not mean the reviewer lost context.
 
-If the reviewer clearly lost the review subject itself, start a new user-relayed round 1 with the complete current subject and a concise summary of settled issues.
+If the reviewer clearly lost the review subject itself, start a new user-relayed first round, without `--follow-up`, with the complete current subject and a concise summary of settled issues.
 Keep the issue history across that restart.
 
 ## Run later rounds
 
 Continue the same external reviewer conversation.
-Invoke the helper with the next iteration and the host response on stdin without a session id.
+Invoke the helper with `--follow-up` and the host response below the response marker line.
 
 ```bash
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
   --agent manual \
-  --iteration 2
+  --follow-up
+=== AGENT_REVIEW_RESPONSE ===
 Accepted: fixed the missing retry.
 Rejected: the proposed lock is redundant because the caller already holds it.
 EOF

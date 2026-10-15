@@ -24,6 +24,7 @@ This update is informational, not an approval request.
 
 Continue the review without waiting unless the user interrupts.
 Track every issue internally by its stable `id`; omit ids from user-facing progress lines.
+Do not number rounds or mention reviewer session ids in user-facing text.
 
 ## Judge each round
 
@@ -48,7 +49,7 @@ Continue immediately with accepted changes unless the user interrupts.
 Send only accepted points and what changed, plus rejected points and why.
 Do not resend the original subject or unchanged instructions.
 
-When adding new scope, place it above the response marker:
+Put the response marker line in every follow-up input, with any new scope above it and the host response below it:
 
 ```text
 Now also review error handling in src/db.py.
@@ -66,7 +67,7 @@ Continue beyond it only while recent rounds are producing substantive new inform
 
 Refresh the soft budget only when user-authored input materially changes the requirements or review scope.
 Relayed reviewer output, an ordinary response to feedback, and fixes within the existing scope stay within the current budget.
-Keep the technical iteration number and reviewer session continuous when refreshing the soft budget.
+Keep the reviewer session when refreshing the soft budget.
 
 ## Final report
 

@@ -43,22 +43,25 @@ export class OperationalError extends Error {
   }
 }
 
-export function parseStdinPayload(
-  payload: string,
-): [string | undefined, string | undefined] {
+export type StdinPayload = {
+  reviewInput?: string
+  hostResponse?: string
+  hasResponseMarker: boolean
+}
+
+export function parseStdinPayload(payload: string): StdinPayload {
   const emptyInputMessage =
     "Review input is empty. Pipe review material into stdin. " +
-    `Use either plain review input or append an '${HOST_RESPONSE_MARKER}' section for later rounds.`
+    `Use either plain review input or, for a follow-up, an '${HOST_RESPONSE_MARKER}' line before the host response.`
   const stripped = payload.trim()
   if (!stripped) throw new Error(emptyInputMessage)
-
-  if (!payload.includes(HOST_RESPONSE_MARKER)) return [stripped, undefined]
 
   const lines = payload.split(/\r?\n/)
   const markerIndex = lines.findIndex(
     (line) => line.trim() === HOST_RESPONSE_MARKER,
   )
-  if (markerIndex === -1) return [stripped, undefined]
+  if (markerIndex === -1)
+    return { reviewInput: stripped, hasResponseMarker: false }
 
   const reviewInput = lines.slice(0, markerIndex).join("\n").trim() || undefined
   const hostResponse =
@@ -68,17 +71,17 @@ export function parseStdinPayload(
       .trim() || undefined
   if (reviewInput === undefined && hostResponse === undefined)
     throw new Error(emptyInputMessage)
-  return [reviewInput, hostResponse]
+  return { reviewInput, hostResponse, hasResponseMarker: true }
 }
 
 export function buildPrompt(options: {
-  iteration: number
+  followUp: boolean
   reviewInput?: string
   hostResponse?: string
   manualRoundToken?: string
 }): string {
-  const { iteration, reviewInput, hostResponse, manualRoundToken } = options
-  const initialRound = iteration === 1
+  const { followUp, reviewInput, hostResponse, manualRoundToken } = options
+  const initialRound = !followUp
   const sections = initialRound
     ? [
         "You are reviewing the host agent's work as a peer reviewer, not as the final authority.",

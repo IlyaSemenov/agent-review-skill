@@ -11,8 +11,10 @@ import {
 import {
   buildPrompt,
   errorMessage,
+  HOST_RESPONSE_MARKER,
   OperationalError,
   parseStdinPayload,
+  type StdinPayload,
 } from "./core.ts"
 
 const DEFAULT_TIMEOUT_SECONDS = 900
@@ -24,7 +26,7 @@ export type CliArgs = {
   agent: AgentName | typeof MANUAL_AGENT
   model?: string
   reasoning?: string
-  iteration: number
+  followUp?: boolean
   resumeSessionId?: string
   timeoutSeconds?: number
 }
@@ -52,7 +54,7 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
         agent: { type: "string" },
         model: { type: "string" },
         reasoning: { type: "string" },
-        iteration: { type: "string" },
+        "follow-up": { type: "boolean" },
         "resume-session-id": { type: "string" },
         "timeout-seconds": { type: "string" },
         help: { type: "boolean", short: "h" },
@@ -76,18 +78,11 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
     )
   }
 
-  const iteration = parseIntegerOption(
-    stringValue(values.iteration),
-    "--iteration",
-    true,
-  )
-  if (iteration === undefined)
-    throw new OperationalError("invalid_input", "--iteration is required")
   return {
     agent: agentValue as CliArgs["agent"],
     model: stringValue(values.model),
     reasoning: stringValue(values.reasoning),
-    iteration,
+    followUp: values["follow-up"] === true || undefined,
     resumeSessionId: stringValue(values["resume-session-id"]),
     timeoutSeconds: parseIntegerOption(
       stringValue(values["timeout-seconds"]),
@@ -98,10 +93,16 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
 
 export function validateArgs(args: CliArgs): void {
   const manual = args.agent === MANUAL_AGENT
-  if (args.iteration < 1) {
+  if (args.resumeSessionId?.trim() === "") {
     throw new OperationalError(
       "invalid_input",
-      "--iteration must be at least 1",
+      "--resume-session-id must not be empty",
+    )
+  }
+  if (!manual && args.followUp) {
+    throw new OperationalError(
+      "invalid_input",
+      "--follow-up is only for --agent manual; continue a CLI review with --resume-session-id",
     )
   }
   if (!manual && args.timeoutSeconds !== undefined && args.timeoutSeconds < 1) {
@@ -118,12 +119,6 @@ export function validateArgs(args: CliArgs): void {
     throw new OperationalError(
       "invalid_input",
       `--timeout-seconds must be at most ${MAX_TIMEOUT_SECONDS}`,
-    )
-  }
-  if (args.iteration > 1 && !manual && !args.resumeSessionId) {
-    throw new OperationalError(
-      "invalid_input",
-      "iteration > 1 requires --resume-session-id",
     )
   }
   if (args.agent === MANUAL_AGENT) {
@@ -169,10 +164,9 @@ export async function main(
   }
 
   const rawInput = dependencies.stdin ?? (await readStdin())
-  let reviewInput: string | undefined
-  let hostResponse: string | undefined
+  let input: StdinPayload
   try {
-    ;[reviewInput, hostResponse] = parseStdinPayload(rawInput)
+    input = parseStdinPayload(rawInput)
   } catch (error) {
     return emitError(
       writeStdout,
@@ -180,25 +174,26 @@ export async function main(
     )
   }
 
-  if (args.iteration === 1 && hostResponse !== undefined) {
+  const manual = args.agent === MANUAL_AGENT
+  const followUp = manual
+    ? args.followUp === true
+    : args.resumeSessionId !== undefined
+  if (followUp !== input.hasResponseMarker) {
     return emitError(
       writeStdout,
       new OperationalError(
         "invalid_input",
-        "iteration 1 accepts only review input, not a response bundle.",
+        followUp
+          ? `A follow-up round requires an '${HOST_RESPONSE_MARKER}' line before the host response.`
+          : `An '${HOST_RESPONSE_MARKER}' line requires a follow-up round: pass --resume-session-id, or --follow-up with --agent manual.`,
       ),
     )
   }
-  if (args.iteration > 1 && hostResponse === undefined) {
-    hostResponse = reviewInput
-    reviewInput = undefined
-  }
 
-  const manual = args.agent === MANUAL_AGENT
   const prompt = buildPrompt({
-    iteration: args.iteration,
-    reviewInput,
-    hostResponse,
+    followUp,
+    reviewInput: input.reviewInput,
+    hostResponse: input.hostResponse,
     manualRoundToken: manual
       ? (dependencies.randomToken ?? (() => randomBytes(4).toString("hex")))()
       : undefined,
@@ -235,13 +230,8 @@ export async function main(
 function parseIntegerOption(
   value: string | undefined,
   option: string,
-  required = false,
 ): number | undefined {
-  if (value === undefined) {
-    if (required)
-      throw new OperationalError("invalid_input", `${option} is required`)
-    return undefined
-  }
+  if (value === undefined) return undefined
   if (!/^-?\d+$/.test(value)) {
     throw new OperationalError("invalid_input", `${option} must be an integer`)
   }
@@ -275,10 +265,10 @@ function emitError(
 
 function usage(): string {
   return [
-    "Usage: node agent_review.ts --agent <name|manual> --iteration <number> [options]",
+    "Usage: node agent_review.ts --agent <name|manual> [options]",
     "",
     `CLI agents: ${AVAILABLE_AGENTS.join(", ")}`,
-    "Options: --model, --reasoning, --resume-session-id, --timeout-seconds",
+    "Options: --model, --reasoning, --resume-session-id, --timeout-seconds, --follow-up (manual only)",
   ].join("\n")
 }
 

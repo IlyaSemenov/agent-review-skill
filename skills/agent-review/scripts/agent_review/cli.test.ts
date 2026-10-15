@@ -3,7 +3,7 @@ import { describe, test } from "node:test"
 
 import type { LoadReviewer } from "./agentex.ts"
 import { MAX_TIMEOUT_SECONDS, main, parseArgs, validateArgs } from "./cli.ts"
-import { OperationalError } from "./core.ts"
+import { HOST_RESPONSE_MARKER, OperationalError } from "./core.ts"
 
 function validPayload() {
   return {
@@ -35,7 +35,6 @@ describe("CLI argument contract", () => {
       parseArgs([
         "--agent",
         "claude",
-        "--iteration=2",
         "--resume-session-id",
         "review-1",
         "--model",
@@ -43,7 +42,7 @@ describe("CLI argument contract", () => {
       ]),
       {
         agent: "claude",
-        iteration: 2,
+        followUp: undefined,
         model: "sonnet",
         reasoning: undefined,
         resumeSessionId: "review-1",
@@ -54,29 +53,28 @@ describe("CLI argument contract", () => {
 
   test("rejects removed add-dir", () => {
     assert.throws(
-      () =>
-        parseArgs([
-          "--agent",
-          "claude",
-          "--iteration",
-          "1",
-          "--add-dir",
-          "/tmp",
-        ]),
+      () => parseArgs(["--agent", "claude", "--add-dir", "/tmp"]),
       /not supported/,
     )
   })
 
-  test("requires a session for CLI continuation", () => {
+  test("rejects --follow-up for CLI reviewers", () => {
     assert.throws(
-      () => validateArgs({ agent: "codex", iteration: 2 }),
-      /requires --resume-session-id/,
+      () => validateArgs({ agent: "codex", followUp: true }),
+      /--resume-session-id/,
+    )
+  })
+
+  test("rejects an empty session id", () => {
+    assert.throws(
+      () => validateArgs({ agent: "codex", resumeSessionId: " " }),
+      /must not be empty/,
     )
   })
 
   test("rejects CLI-only options for user relay", () => {
     assert.throws(
-      () => validateArgs({ agent: "manual", iteration: 1, model: "x" }),
+      () => validateArgs({ agent: "manual", model: "x" }),
       /--model cannot be used/,
     )
   })
@@ -85,7 +83,6 @@ describe("CLI argument contract", () => {
     assert.doesNotThrow(() =>
       validateArgs({
         agent: "pi",
-        iteration: 1,
         timeoutSeconds: MAX_TIMEOUT_SECONDS,
       }),
     )
@@ -93,7 +90,6 @@ describe("CLI argument contract", () => {
       () =>
         validateArgs({
           agent: "pi",
-          iteration: 1,
           timeoutSeconds: MAX_TIMEOUT_SECONDS + 1,
         }),
       new RegExp(`at most ${MAX_TIMEOUT_SECONDS}`),
@@ -105,7 +101,7 @@ describe("main", () => {
   test("emits an isolated user-relay prompt", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--iteration", "1"],
+      argv: ["--agent", "manual"],
       stdin: "Review src/auth.ts",
       randomToken: () => "a1b2c3d4",
       writeStdout: capture.write,
@@ -118,17 +114,50 @@ describe("main", () => {
     assert.match(capture.output(), /"a1b2c3d4"/)
   })
 
-  test("treats unmarked later-round input as the host response", async () => {
+  test("emits a delta prompt for a marked follow-up", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--iteration", "2"],
-      stdin: "Accepted: fixed it.",
+      argv: ["--agent", "manual", "--follow-up"],
+      stdin: `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
       randomToken: () => "e5f6a7b8",
       writeStdout: capture.write,
     })
     assert.equal(exitCode, 0)
     assert.match(capture.output(), /^Host agent response/)
     assert.doesNotMatch(capture.output(), /Review input:/)
+  })
+
+  test("rejects a follow-up without the response marker", async () => {
+    const capture = captureOutput()
+    const exitCode = await main({
+      argv: ["--agent", "manual", "--follow-up"],
+      stdin: "Accepted: fixed it.",
+      writeStdout: capture.write,
+    })
+    assert.equal(exitCode, 1)
+    assert.match(
+      capture.output(),
+      /requires an '=== AGENT_REVIEW_RESPONSE ===' line/,
+    )
+  })
+
+  test("rejects the response marker without a follow-up signal", async () => {
+    for (const stdin of [
+      `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      `Review X\n${HOST_RESPONSE_MARKER}\n  \n`,
+    ]) {
+      const capture = captureOutput()
+      const exitCode = await main({
+        argv: ["--agent", "codex"],
+        stdin,
+        writeStdout: capture.write,
+        loadReviewer: async () => {
+          throw new Error("a rejected round must not invoke a reviewer")
+        },
+      })
+      assert.equal(exitCode, 1)
+      assert.match(capture.output(), /requires a follow-up round/)
+    }
   })
 
   test("emits normalized Unicode JSON for a CLI review", async () => {
@@ -148,7 +177,7 @@ describe("main", () => {
       close: async () => {},
     })
     const exitCode = await main({
-      argv: ["--agent", "codex", "--iteration", "1"],
+      argv: ["--agent", "codex"],
       stdin: "Review src/auth.ts",
       cwd: "/repo",
       writeStdout: capture.write,
@@ -159,10 +188,61 @@ describe("main", () => {
     assert.doesNotMatch(capture.output(), /\\u0412/)
   })
 
+  test("resumes a CLI review with a delta prompt", async () => {
+    const capture = captureOutput()
+    let resumedSessionId: string | undefined
+    let sentPrompt = ""
+    const loadReviewer: LoadReviewer = async () => async (options) => {
+      resumedSessionId = options.sessionId
+      return {
+        sessionId: "review-1",
+        send: async (prompt) => {
+          sentPrompt = prompt
+          return {
+            summary: JSON.stringify(validPayload()),
+            costUsd: null,
+            status: "completed",
+            errorCode: null,
+            errorMessage: null,
+          }
+        },
+        close: async () => {},
+      }
+    }
+    const exitCode = await main({
+      argv: ["--agent", "codex", "--resume-session-id", "review-1"],
+      stdin: `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      cwd: "/repo",
+      writeStdout: capture.write,
+      loadReviewer,
+    })
+    assert.equal(exitCode, 0)
+    assert.equal(resumedSessionId, "review-1")
+    assert.match(sentPrompt, /^Host agent response/)
+    assert.doesNotMatch(sentPrompt, /host agent's work/)
+  })
+
+  test("rejects an unmarked CLI follow-up", async () => {
+    const capture = captureOutput()
+    const exitCode = await main({
+      argv: ["--agent", "codex", "--resume-session-id", "review-1"],
+      stdin: "Accepted: fixed it.",
+      writeStdout: capture.write,
+      loadReviewer: async () => {
+        throw new Error("a rejected round must not invoke a reviewer")
+      },
+    })
+    assert.equal(exitCode, 1)
+    assert.match(
+      capture.output(),
+      /requires an '=== AGENT_REVIEW_RESPONSE ===' line/,
+    )
+  })
+
   test("emits operational errors as JSON", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--iteration", "1", "--reasoning", "high"],
+      argv: ["--agent", "manual", "--reasoning", "high"],
       stdin: "Review X",
       writeStdout: capture.write,
     })
@@ -180,7 +260,7 @@ describe("main", () => {
       throw new OperationalError("timeout", "expired")
     }
     const exitCode = await main({
-      argv: ["--agent", "codex", "--iteration", "1", "--timeout-seconds", "7"],
+      argv: ["--agent", "codex", "--timeout-seconds", "7"],
       stdin: "Review X",
       writeStdout: capture.write,
       loadReviewer,

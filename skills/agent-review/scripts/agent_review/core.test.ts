@@ -27,36 +27,41 @@ describe("parseStdinPayload", () => {
   })
 
   test("returns plain input", () => {
-    assert.deepEqual(parseStdinPayload(" Review src/auth.ts "), [
-      "Review src/auth.ts",
-      undefined,
-    ])
+    assert.deepEqual(parseStdinPayload(" Review src/auth.ts "), {
+      reviewInput: "Review src/auth.ts",
+      hasResponseMarker: false,
+    })
   })
 
   test("splits a marker on its own line", () => {
     const input = `Review src/auth.ts\n${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`
-    assert.deepEqual(parseStdinPayload(input), [
-      "Review src/auth.ts",
-      "Accepted: fixed it.",
-    ])
+    assert.deepEqual(parseStdinPayload(input), {
+      reviewInput: "Review src/auth.ts",
+      hostResponse: "Accepted: fixed it.",
+      hasResponseMarker: true,
+    })
   })
 
   test("ignores an inline marker", () => {
     const input = `The document mentions ${HOST_RESPONSE_MARKER} inline.`
-    assert.deepEqual(parseStdinPayload(input), [input, undefined])
+    assert.deepEqual(parseStdinPayload(input), {
+      reviewInput: input,
+      hasResponseMarker: false,
+    })
   })
 
   test("supports response-only continuation", () => {
-    assert.deepEqual(parseStdinPayload(`${HOST_RESPONSE_MARKER}\nRejected.`), [
-      undefined,
-      "Rejected.",
-    ])
+    assert.deepEqual(parseStdinPayload(`${HOST_RESPONSE_MARKER}\nRejected.`), {
+      reviewInput: undefined,
+      hostResponse: "Rejected.",
+      hasResponseMarker: true,
+    })
   })
 })
 
 describe("prompt construction", () => {
   test("builds a full first-round prompt", () => {
-    const prompt = buildPrompt({ iteration: 1, reviewInput: "Review X" })
+    const prompt = buildPrompt({ followUp: false, reviewInput: "Review X" })
     assert.match(prompt, /host agent's work/)
     assert.match(prompt, /Review X/)
     assert.match(prompt, /do not modify files or repository state/)
@@ -66,7 +71,7 @@ describe("prompt construction", () => {
 
   test("builds a delta-only continuation", () => {
     const prompt = buildPrompt({
-      iteration: 3,
+      followUp: true,
       reviewInput: "Also inspect Y",
       hostResponse: "Fixed X",
     })
@@ -78,7 +83,7 @@ describe("prompt construction", () => {
 
   test("adds a quoted relay token", () => {
     const prompt = buildPrompt({
-      iteration: 1,
+      followUp: false,
       reviewInput: "Review X",
       manualRoundToken: "0123abcd",
     })

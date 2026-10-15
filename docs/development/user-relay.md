@@ -8,7 +8,7 @@ Keep runtime steps and examples in `skills/agent-review/user-relay.md`; do not d
 
 Treat `manual` as a user-relay transport, not as an agentex transport: it owns no reviewer process or session.
 Keep user relay host- and reviewer-agnostic and never present it as a fallback for a particular CLI reviewer.
-Allow later rounds without a session id because conversation continuity belongs to the user-managed reviewer session.
+Signal later rounds with `--follow-up` instead of a session id.
 
 Preserve the authorship boundary across lenient parsing: extracted review data is reviewer-authored feedback, while surrounding text is a user-authored comment and the only source of authorization or scope changes.
 Treat malformed or missing JSON as format loss, not context loss; restart with a full prompt only when the reviewer loses the review subject itself.

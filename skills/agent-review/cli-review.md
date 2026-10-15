@@ -34,8 +34,7 @@ Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper
 
 ```bash
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent claude \
-  --iteration 1
+  --agent claude
 Review docs/plan.md and src/reviewer.py.
 
 Review focus:
@@ -44,19 +43,19 @@ Review focus:
 EOF
 ```
 
-Round-1 stdin is the review subject and its review focus.
+First-round stdin is the review subject and its review focus.
 The helper sends the full reviewer role, rules, subject, and response contract.
 
 ## Resume later rounds
 
 Pass the previous output's `session_id` through `--resume-session-id`.
-Send only the host response to prior feedback unless the reviewer also needs new scope.
+Send the host response below the response marker line, as described in [Review loop](review-loop.md).
 
 ```bash
 cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
   --agent claude \
-  --iteration 2 \
   --resume-session-id "$SESSION_ID"
+=== AGENT_REVIEW_RESPONSE ===
 Accepted: added retry-with-backoff to publish().
 Rejected: the caller already holds the lock, so the proposed mutex is redundant.
 EOF

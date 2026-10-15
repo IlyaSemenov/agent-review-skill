@@ -13,7 +13,7 @@ Keep reviewer sessions, the round deadline, retries, and transport failure class
 
 ## Round contract
 
-Build a full prompt only for round 1 and delta-only prompts while the reviewer conversation retains the original subject.
+Build a full prompt only for the first round and delta-only prompts while the reviewer conversation retains the original subject.
 Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
 Limit later prompts to the host response, new review scope, and per-round values that changed.
 
@@ -21,16 +21,15 @@ Keep review criteria in the runtime focus document, which the host adapts and se
 Keep in the prompt only what holds for any focus: the reviewer role, the read-only rule, issue quality rules, severity definitions, and the response contract.
 Have the reviewer withhold the low-severity issues it found while higher-severity issues remain open, and set `deferred_polish` only when it actually withholds one.
 
-Keep `--iteration` as technical state that selects the prompt shape.
-Keep the round budget in runtime instructions.
+Select the prompt shape from the transport's continuation signal: `--resume-session-id` for CLI reviewers and `--follow-up` for `--agent manual`.
+Keep round numbers out of the helper and the round budget in runtime instructions.
 
 ## Input and execution
 
-Interpret round-1 stdin as review input and unmarked round-2+ stdin as the host response.
-Use the literal `=== AGENT_REVIEW_RESPONSE ===` marker to separate optional new scope above it from the host response below it.
-
-Reject empty input and round-1 response bundles.
-Require `--resume-session-id` for CLI follow-ups but not for `--agent manual`.
+Interpret first-round stdin as review input.
+Require the literal `=== AGENT_REVIEW_RESPONSE ===` marker line in follow-up stdin, separating optional new scope above it from the host response below it.
+Reject a follow-up without the marker and the marker without a follow-up signal, judged by the marker line itself rather than by the sections around it.
+Reject empty input and `--follow-up` for CLI reviewers.
 
 Apply one wall-clock deadline to runtime dependency installation, reviewer session startup, the review prompt, and the single parse-repair retry.
 Treat it as a bound on waiting: accept a turn that completes within the transport's timeout grace period instead of discarding a finished review.
