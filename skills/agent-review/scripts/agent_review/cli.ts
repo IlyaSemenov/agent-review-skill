@@ -25,7 +25,6 @@ export type CliArgs = {
   model?: string
   reasoning?: string
   iteration: number
-  maxIterations?: number
   resumeSessionId?: string
   timeoutSeconds?: number
 }
@@ -54,7 +53,6 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
         model: { type: "string" },
         reasoning: { type: "string" },
         iteration: { type: "string" },
-        "max-iterations": { type: "string" },
         "resume-session-id": { type: "string" },
         "timeout-seconds": { type: "string" },
         help: { type: "boolean", short: "h" },
@@ -90,10 +88,6 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
     model: stringValue(values.model),
     reasoning: stringValue(values.reasoning),
     iteration,
-    maxIterations: parseIntegerOption(
-      stringValue(values["max-iterations"]),
-      "--max-iterations",
-    ),
     resumeSessionId: stringValue(values["resume-session-id"]),
     timeoutSeconds: parseIntegerOption(
       stringValue(values["timeout-seconds"]),
@@ -108,18 +102,6 @@ export function validateArgs(args: CliArgs): void {
     throw new OperationalError(
       "invalid_input",
       "--iteration must be at least 1",
-    )
-  }
-  if (args.maxIterations !== undefined && args.maxIterations < 1) {
-    throw new OperationalError(
-      "invalid_input",
-      "--max-iterations must be at least 1",
-    )
-  }
-  if (args.maxIterations !== undefined && args.iteration > args.maxIterations) {
-    throw new OperationalError(
-      "invalid_input",
-      "--iteration cannot exceed --max-iterations",
     )
   }
   if (!manual && args.timeoutSeconds !== undefined && args.timeoutSeconds < 1) {
@@ -217,7 +199,6 @@ export async function main(
     iteration: args.iteration,
     reviewInput,
     hostResponse,
-    finalRound: args.iteration === args.maxIterations,
     manualRoundToken: manual
       ? (dependencies.randomToken ?? (() => randomBytes(4).toString("hex")))()
       : undefined,
@@ -297,7 +278,7 @@ function usage(): string {
     "Usage: node agent_review.ts --agent <name|manual> --iteration <number> [options]",
     "",
     `CLI agents: ${AVAILABLE_AGENTS.join(", ")}`,
-    "Options: --model, --reasoning, --max-iterations, --resume-session-id, --timeout-seconds",
+    "Options: --model, --reasoning, --resume-session-id, --timeout-seconds",
   ].join("\n")
 }
 

@@ -76,10 +76,8 @@ export function buildPrompt(options: {
   reviewInput?: string
   hostResponse?: string
   manualRoundToken?: string
-  finalRound?: boolean
 }): string {
-  const { iteration, reviewInput, hostResponse, manualRoundToken, finalRound } =
-    options
+  const { iteration, reviewInput, hostResponse, manualRoundToken } = options
   const initialRound = iteration === 1
   const sections = initialRound
     ? [
@@ -109,11 +107,7 @@ export function buildPrompt(options: {
     )
   }
 
-  const finalRoundInstruction =
-    "This is the final review round: report every remaining issue, including low-severity ones, and set deferred_polish=false."
-
   if (!initialRound) {
-    if (finalRound) sections.push("", finalRoundInstruction)
     if (manualRoundToken !== undefined) {
       sections.push(
         "",
@@ -154,7 +148,6 @@ export function buildPrompt(options: {
     "Report only issues you still stand behind; omit concerns you dismissed while reviewing.",
     "If there are no issues, return an empty issues array.",
   )
-  if (finalRound) sections.push(finalRoundInstruction)
   return `${sections.join("\n")}\n`
 }
 

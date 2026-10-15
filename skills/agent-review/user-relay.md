@@ -3,7 +3,7 @@
 In this path, the user carries messages between the host and reviewer conversations.
 Use `--agent manual`, which emits a prompt without selecting or launching a reviewer CLI.
 
-Pass `--agent manual`, `--iteration`, and an optional explicit `--max-iterations` only.
+Pass `--agent manual` and `--iteration` only.
 The helper prints a reviewer prompt and exits without invoking a reviewer process.
 
 ## Run round 1
@@ -52,7 +52,6 @@ Missing JSON alone does not mean the reviewer lost context.
 
 If the reviewer clearly lost the review subject itself, start a new user-relayed round 1 with the complete current subject and a concise summary of settled issues.
 Keep the issue history across that restart.
-Under an explicit user-defined round limit, pass the number of remaining rounds as `--max-iterations` for the restarted conversation.
 
 ## Run later rounds
 
@@ -68,5 +67,5 @@ Rejected: the proposed lock is redundant because the caller already holds it.
 EOF
 ```
 
-The emitted follow-up contains only the host response, optional new scope, the final-round instruction in the round at an explicit limit, and fresh `manual_review_token`.
+The emitted follow-up contains only the host response, optional new scope, and fresh `manual_review_token`.
 Give the complete follow-up prompt to the user for relay into the same reviewer conversation.

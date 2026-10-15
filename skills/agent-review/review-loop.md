@@ -60,16 +60,13 @@ Rejected: the proposed lock is redundant.
 Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
 Do not stop because no actionable issues remain while `deferred_polish` is true; run another round to receive the withheld issues.
 
-Use 10 rounds as a soft working budget when the user did not set a limit.
+Use 10 rounds as a soft working budget.
 Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
 Continue beyond it only while recent rounds are producing substantive new information or verifying meaningful changes.
 
 Refresh the soft budget only when user-authored input materially changes the requirements or review scope.
 Relayed reviewer output, an ordinary response to feedback, and fixes within the existing scope stay within the current budget.
 Keep the technical iteration number and reviewer session continuous when refreshing the soft budget.
-
-If the user explicitly sets a maximum number of rounds, keep `--max-iterations` in the fixed command template for every remaining invocation.
-Treat an explicit maximum as a hard limit whose extension or reset requires the user's permission.
 
 ## Final report
 

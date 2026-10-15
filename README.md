@@ -78,7 +78,7 @@ Between rounds, the calling agent:
 - continues the same reviewer conversation through CLI resume or user relay
 - sends only the round delta rather than repeating the role, original subject, or response schema
 - repeats only while another round is still likely to improve the review or clarify a real disagreement
-- treats 10 rounds as a soft budget unless you explicitly request a hard limit
+- treats 10 rounds as a soft budget
 - refreshes that soft budget when you materially change the requirements or review scope
 - defers low-severity polish until higher-severity issues are resolved, so it is not fixed in code that is about to change
 - stops when the agent approves or when the remaining disagreement is clear enough that another round is not worth it

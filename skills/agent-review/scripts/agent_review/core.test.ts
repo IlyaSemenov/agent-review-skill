@@ -76,22 +76,6 @@ describe("prompt construction", () => {
     assert.doesNotMatch(prompt, /approval_reason:/)
   })
 
-  test("marks the final round in both prompt shapes", () => {
-    for (const iteration of [1, 2]) {
-      const prompt = buildPrompt({
-        iteration,
-        reviewInput: "Review X",
-        hostResponse: iteration === 1 ? undefined : "Fixed X",
-        finalRound: true,
-      })
-      assert.match(prompt, /final review round/)
-    }
-    assert.doesNotMatch(
-      buildPrompt({ iteration: 2, hostResponse: "Fixed X" }),
-      /final review round/,
-    )
-  })
-
   test("adds a quoted relay token", () => {
     const prompt = buildPrompt({
       iteration: 1,
