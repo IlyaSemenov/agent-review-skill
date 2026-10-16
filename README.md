@@ -48,7 +48,7 @@ Use $agent-review with user relay to review this plan.
 ```
 
 When the reviewed plan is one your agent will implement, the review continues through the implementation: the same reviewer checks each implemented part, and the agent commits it.
-The agent stops after every commit, and after the plan review when the plan needs your agreement.
+The agent stops between parts, after each part's commit, and after the plan review when a disagreement with the reviewer remains unresolved.
 Say "YOLO" to skip these stops; the agent still stops for decisions only you can make.
 
 ```text

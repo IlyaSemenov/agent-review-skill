@@ -8,9 +8,10 @@ Do not follow it when the user asked only for a plan or the plan is itself the d
 With the first round, tell the user in two or three sentences:
 
 - the stages: plan review → implementation → implementation review by the same reviewer → commit;
-- that you stop after every commit, and after the plan review when it needs the user's agreement;
-- that saying "YOLO" skips these stops, while you still stop for decisions only the user can make and for blockers.
+- that you stop after the plan review when a disagreement with the reviewer remains unresolved;
+- when the plan has several parts, that you stop between parts, after each part's commit, and that saying "YOLO" skips these stops, while you still stop for decisions only the user can make and for blockers.
 
+Do not mention YOLO when the plan has a single part.
 If the user already asked for YOLO, state the mode in one line instead.
 
 If your other instructions restrict commits or other git-state writes, ask in the same message whether you may commit and manage the working-copy git state for this task.
@@ -24,7 +25,7 @@ Keep names that will land in code in scope.
 State the plan's parts explicitly, one commit each, even when there is only one.
 Give independent changes separate parts.
 
-Unless the user asked for YOLO, stop after the plan review when a disagreement with the reviewer remains unresolved, when you judge that the plan needs the user's agreement, or when an open question can be answered only by the user.
+Unless the user asked for YOLO, stop after the plan review when a disagreement with the reviewer remains unresolved.
 Show the plan and the plan-review outcome, then wait.
 
 ## Implement and review each part
@@ -48,16 +49,18 @@ If unrelated changes in the working tree or index cannot be separated safely, st
 
 ## Stop
 
-Unless the user asked for YOLO, stop after every commit.
-When parts remain, list them; the user resumes the next one.
+The task is done after the last part's commit; stop there.
 
-With YOLO, continue through all parts without stopping after the plan review or after commits.
+Unless the user asked for YOLO, also stop between parts, after each part's commit.
+List the remaining parts; the user resumes the next one.
+
+With YOLO, continue through all parts without stopping after the plan review or between parts.
 Settle remaining disagreements yourself and report them as unresolved.
-Stop when the task is done.
+After the plan review and after each part's commit, give the same report as at a stop, then continue without waiting for the user.
 
 Regardless of YOLO, stop at any stage on a blocker: a decision only the user can make, a hard-to-reverse operation the user has not confirmed, or a required check that keeps failing and you cannot fix.
 When a review issue needs the user's decision, finish the review loop for the other issues, then stop before the next stage or commit.
 The host environment's own plan-approval gates, the reviewer-trust confirmation, user-relay handoffs, and operational errors also apply regardless of YOLO.
 
 At each stop, give the final report from the review loop.
-Cover every review since the previous stop, including the review of a part that a blocker interrupted before its commit.
+Cover every review since the previous report, including the review of a part that a blocker interrupted before its commit.
