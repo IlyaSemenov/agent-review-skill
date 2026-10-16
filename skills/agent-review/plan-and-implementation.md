@@ -47,6 +47,11 @@ Commit only the part's changes.
 Write the message according to the project's commit conventions, or follow the style of `git log` when none are documented.
 If unrelated changes in the working tree or index cannot be separated safely, stop and ask.
 
+Keep each part in one commit.
+Put later changes to a committed part into that part's commit, whether they come from further review rounds, from the user, or from other reviewers' feedback the user passes on.
+Amend the commit while it is the latest one and is not pushed, and update its message when the change alters what it describes.
+Otherwise, ask the user whether to rewrite history or add a separate commit.
+
 ## Stop
 
 The task is done after the last part's commit; stop there.
