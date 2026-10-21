@@ -12,8 +12,8 @@ Before the first CLI round, tell the user that the selected reviewer receives th
 
 Do not ask a sandboxed reviewer to run commands that need to write files, such as most test runners.
 
-Obtain the user's explicit confirmation once for the review session.
-When host-specific guidance also requires authorization for outbound project data, combine both grants into one confirmation.
+For Claude Code and Codex reviewers, a user request that names the reviewer counts as confirmation; state the explanation in one line and start the round.
+Otherwise, and always for OpenCode and pi, obtain the user's explicit confirmation once for the review session.
 
 ## Configure the reviewer
 
@@ -30,35 +30,40 @@ When `SKILL.md` links a reviewer-specific runtime document, follow it for value 
 ## Run round 1
 
 Keep the shell working directory in the repository being reviewed.
-Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper by absolute path.
+Write each round's input to a new file outside the repository with your file-writing tool, in your host's scratch directory when it has one, otherwise under `/tmp`.
+Pass that file through `--input-file` and invoke the helper by the absolute path of `scripts/agent_review.ts` in the skill directory as you loaded it, without resolving symlinks.
+Spell that path the same way on every round, and quote it only when it contains characters that require shell quoting.
+Write the helper command on one line as literal words: no shell variables, substitutions, pipes, redirections, or heredocs.
 
-```bash
-cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent claude
+First-round input is the review subject and its review focus:
+
+```text
 Review docs/plan.md and src/reviewer.py.
 
 Review focus:
 - Missing decisions and retry behavior.
 - <criteria selected according to review-focus.md>
-EOF
 ```
 
-First-round stdin is the review subject and its review focus.
+```bash
+node /path/to/agent-review/scripts/agent_review.ts --agent claude --input-file /tmp/agent-review/round-1.md
+```
+
 The helper sends the full reviewer role, rules, subject, and response contract.
 
 ## Resume later rounds
 
-Pass the previous output's `session_id` through `--resume-session-id`.
-Send the host response below the response marker line, as described in [Review loop](review-loop.md).
+Pass the previous output's `session_id` value through `--resume-session-id`.
+Write the host response below the response marker line in a new input file, as described in [Review loop](review-loop.md).
 
-```bash
-cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent claude \
-  --resume-session-id "$SESSION_ID"
+```text
 === AGENT_REVIEW_RESPONSE ===
 Accepted: added retry-with-backoff to publish().
 Rejected: the caller already holds the lock, so the proposed mutex is redundant.
-EOF
+```
+
+```bash
+node /path/to/agent-review/scripts/agent_review.ts --agent claude --resume-session-id 0199a6f2-4c1e-7d30-9b8a-3f5e2d1c0a47 --input-file /tmp/agent-review/round-2.md
 ```
 
 The helper sends a delta-only follow-up and does not repeat the role, original subject, schema, or unchanged guidance.

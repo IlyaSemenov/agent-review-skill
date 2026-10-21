@@ -2,25 +2,11 @@
 
 Apply these rules only when you (the host agent) are Codex.
 
-## Confirm before the first review
+## Run the helper with escalation
 
 The helper sends the review input (a diff, plan, or file paths — i.e. private project context) to the selected reviewer CLI, which may relay it to an external service.
-Codex's approval layer treats that as an outbound transfer of workspace data and blocks the run, even on an explicit user request.
-Apply the same gate to every reviewer because `--agent` and `--model` do not reliably show whether it stays local.
-
-Ask the user once before the **first** review of a session.
-That confirmation covers later rounds of the same session.
-
-Show, verbatim:
-
-- the exact helper command you will run (including `--agent` and any user-requested `--model` or `--reasoning` flag), and
-- the confirmation wording the user needs to give for you to request escalation — that they explicitly authorize sending this review input to the reviewer and, for OpenCode and pi, auto-approving all of the reviewer's local tool permission requests.
-
-Put the exact helper command alone in a fenced code block and close the fence immediately after the command or heredoc terminator.
-Ask the user to reply with the confirmation wording, and put that wording alone in a separate fenced code block.
-
-Once the user gives that confirmation, request the sandbox escalation and run the exact command shown.
-For OpenCode and pi, this grants the reviewer all of its local tool permissions in addition to making the host escalation explicit and auditable.
+Request sandbox escalation for every helper round without asking for confirmation beyond what [Review via CLI](../cli-review.md) requires.
+A user's rule that allows the helper command lets it run without an approval request.
 
 ## Track yielded helper commands
 
@@ -43,6 +29,17 @@ interpret output only after exit_code appears
 
 ## When the run is blocked
 
-A block here is the approval layer, not the helper or the reviewer CLI.
+A block here is the approval layer, not the helper or the reviewer CLI: it may treat the run as an outbound transfer of workspace data, even on an explicit user request.
 Keep the timeout and helper unchanged, and keep the user informed instead of silently falling back to a local review.
-Surface the block, quote what would be sent, and ask for the confirmation above.
+
+Surface the block, quote what would be sent, and show, verbatim:
+
+- the exact helper command you will run, and
+- the confirmation wording the user needs to give for you to request escalation again — that they explicitly authorize sending this review input to the reviewer and, for OpenCode and pi, auto-approving all of the reviewer's local tool permission requests.
+
+Put the exact helper command alone in a fenced code block.
+Ask the user to reply with the confirmation wording, and put that wording alone in a separate fenced code block.
+Mention that they can allow the helper permanently by adding `prefix_rule(pattern=["node", "<absolute helper path>"], decision="allow")` to `~/.codex/rules/default.rules` and restarting Codex.
+
+Once the user gives that confirmation, request the sandbox escalation again and run the exact command shown.
+That confirmation covers later rounds of the same session.

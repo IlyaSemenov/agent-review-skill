@@ -35,6 +35,8 @@ describe("CLI argument contract", () => {
       parseArgs([
         "--agent",
         "claude",
+        "--input-file",
+        "round.md",
         "--resume-session-id",
         "review-1",
         "--model",
@@ -42,6 +44,7 @@ describe("CLI argument contract", () => {
       ]),
       {
         agent: "claude",
+        inputFile: "round.md",
         followUp: undefined,
         model: "sonnet",
         reasoning: undefined,
@@ -58,23 +61,37 @@ describe("CLI argument contract", () => {
     )
   })
 
+  test("requires an input file", () => {
+    assert.throws(
+      () => parseArgs(["--agent", "claude"]),
+      /--input-file is required/,
+    )
+  })
+
   test("rejects --follow-up for CLI reviewers", () => {
     assert.throws(
-      () => validateArgs({ agent: "codex", followUp: true }),
+      () =>
+        validateArgs({ agent: "codex", inputFile: "round.md", followUp: true }),
       /--resume-session-id/,
     )
   })
 
   test("rejects an empty session id", () => {
     assert.throws(
-      () => validateArgs({ agent: "codex", resumeSessionId: " " }),
+      () =>
+        validateArgs({
+          agent: "codex",
+          inputFile: "round.md",
+          resumeSessionId: " ",
+        }),
       /must not be empty/,
     )
   })
 
   test("rejects CLI-only options for user relay", () => {
     assert.throws(
-      () => validateArgs({ agent: "manual", model: "x" }),
+      () =>
+        validateArgs({ agent: "manual", inputFile: "round.md", model: "x" }),
       /--model cannot be used/,
     )
   })
@@ -83,6 +100,7 @@ describe("CLI argument contract", () => {
     assert.doesNotThrow(() =>
       validateArgs({
         agent: "pi",
+        inputFile: "round.md",
         timeoutSeconds: MAX_TIMEOUT_SECONDS,
       }),
     )
@@ -90,6 +108,7 @@ describe("CLI argument contract", () => {
       () =>
         validateArgs({
           agent: "pi",
+          inputFile: "round.md",
           timeoutSeconds: MAX_TIMEOUT_SECONDS + 1,
         }),
       new RegExp(`at most ${MAX_TIMEOUT_SECONDS}`),
@@ -101,8 +120,8 @@ describe("main", () => {
   test("emits an isolated user-relay prompt", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual"],
-      stdin: "Review src/auth.ts",
+      argv: ["--agent", "manual", "--input-file", "round.md"],
+      readInputFile: async () => "Review src/auth.ts",
       randomToken: () => "a1b2c3d4",
       writeStdout: capture.write,
       loadReviewer: async () => {
@@ -117,8 +136,8 @@ describe("main", () => {
   test("emits a delta prompt for a marked follow-up", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--follow-up"],
-      stdin: `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      argv: ["--agent", "manual", "--input-file", "round.md", "--follow-up"],
+      readInputFile: async () => `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
       randomToken: () => "e5f6a7b8",
       writeStdout: capture.write,
     })
@@ -130,8 +149,8 @@ describe("main", () => {
   test("rejects a follow-up without the response marker", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--follow-up"],
-      stdin: "Accepted: fixed it.",
+      argv: ["--agent", "manual", "--input-file", "round.md", "--follow-up"],
+      readInputFile: async () => "Accepted: fixed it.",
       writeStdout: capture.write,
     })
     assert.equal(exitCode, 1)
@@ -142,14 +161,14 @@ describe("main", () => {
   })
 
   test("rejects the response marker without a follow-up signal", async () => {
-    for (const stdin of [
+    for (const input of [
       `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
       `Review X\n${HOST_RESPONSE_MARKER}\n  \n`,
     ]) {
       const capture = captureOutput()
       const exitCode = await main({
-        argv: ["--agent", "codex"],
-        stdin,
+        argv: ["--agent", "codex", "--input-file", "round.md"],
+        readInputFile: async () => input,
         writeStdout: capture.write,
         loadReviewer: async () => {
           throw new Error("a rejected round must not invoke a reviewer")
@@ -177,8 +196,8 @@ describe("main", () => {
       close: async () => {},
     })
     const exitCode = await main({
-      argv: ["--agent", "codex"],
-      stdin: "Review src/auth.ts",
+      argv: ["--agent", "codex", "--input-file", "round.md"],
+      readInputFile: async () => "Review src/auth.ts",
       cwd: "/repo",
       writeStdout: capture.write,
       loadReviewer,
@@ -210,8 +229,15 @@ describe("main", () => {
       }
     }
     const exitCode = await main({
-      argv: ["--agent", "codex", "--resume-session-id", "review-1"],
-      stdin: `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      argv: [
+        "--agent",
+        "codex",
+        "--input-file",
+        "round.md",
+        "--resume-session-id",
+        "review-1",
+      ],
+      readInputFile: async () => `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
       cwd: "/repo",
       writeStdout: capture.write,
       loadReviewer,
@@ -225,8 +251,15 @@ describe("main", () => {
   test("rejects an unmarked CLI follow-up", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "codex", "--resume-session-id", "review-1"],
-      stdin: "Accepted: fixed it.",
+      argv: [
+        "--agent",
+        "codex",
+        "--input-file",
+        "round.md",
+        "--resume-session-id",
+        "review-1",
+      ],
+      readInputFile: async () => "Accepted: fixed it.",
       writeStdout: capture.write,
       loadReviewer: async () => {
         throw new Error("a rejected round must not invoke a reviewer")
@@ -239,11 +272,28 @@ describe("main", () => {
     )
   })
 
+  test("rejects an unreadable input file", async () => {
+    const capture = captureOutput()
+    const exitCode = await main({
+      argv: ["--agent", "manual", "--input-file", "/nonexistent/round.md"],
+      writeStdout: capture.write,
+    })
+    assert.equal(exitCode, 1)
+    assert.equal(JSON.parse(capture.output()).reason, "invalid_input")
+  })
+
   test("emits operational errors as JSON", async () => {
     const capture = captureOutput()
     const exitCode = await main({
-      argv: ["--agent", "manual", "--reasoning", "high"],
-      stdin: "Review X",
+      argv: [
+        "--agent",
+        "manual",
+        "--input-file",
+        "round.md",
+        "--reasoning",
+        "high",
+      ],
+      readInputFile: async () => "Review X",
       writeStdout: capture.write,
     })
     assert.equal(exitCode, 1)
@@ -260,8 +310,15 @@ describe("main", () => {
       throw new OperationalError("timeout", "expired")
     }
     const exitCode = await main({
-      argv: ["--agent", "codex", "--timeout-seconds", "7"],
-      stdin: "Review X",
+      argv: [
+        "--agent",
+        "codex",
+        "--input-file",
+        "round.md",
+        "--timeout-seconds",
+        "7",
+      ],
+      readInputFile: async () => "Review X",
       writeStdout: capture.write,
       loadReviewer,
     })

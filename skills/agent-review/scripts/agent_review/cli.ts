@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto"
+import { readFile } from "node:fs/promises"
 import process from "node:process"
 import { parseArgs as parseNodeArgs } from "node:util"
 
@@ -13,8 +14,8 @@ import {
   errorMessage,
   HOST_RESPONSE_MARKER,
   OperationalError,
-  parseStdinPayload,
-  type StdinPayload,
+  parseRoundInput,
+  type RoundInput,
 } from "./core.ts"
 
 const DEFAULT_TIMEOUT_SECONDS = 900
@@ -24,6 +25,7 @@ const MANUAL_AGENT = "manual"
 
 export type CliArgs = {
   agent: AgentName | typeof MANUAL_AGENT
+  inputFile: string
   model?: string
   reasoning?: string
   followUp?: boolean
@@ -52,6 +54,7 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
       strict: true,
       options: {
         agent: { type: "string" },
+        "input-file": { type: "string" },
         model: { type: "string" },
         reasoning: { type: "string" },
         "follow-up": { type: "boolean" },
@@ -77,9 +80,13 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
       `Unknown agent '${agentValue}'. Available agents: ${AVAILABLE_AGENTS.join(", ")}, or manual.`,
     )
   }
+  const inputFile = stringValue(values["input-file"])
+  if (!inputFile)
+    throw new OperationalError("invalid_input", "--input-file is required")
 
   return {
     agent: agentValue as CliArgs["agent"],
+    inputFile,
     model: stringValue(values.model),
     reasoning: stringValue(values.reasoning),
     followUp: values["follow-up"] === true || undefined,
@@ -141,7 +148,7 @@ export function validateArgs(args: CliArgs): void {
 export async function main(
   dependencies: {
     argv?: string[]
-    stdin?: string
+    readInputFile?: (path: string) => Promise<string>
     cwd?: string
     loadReviewer?: LoadReviewer
     randomToken?: () => string
@@ -163,10 +170,11 @@ export async function main(
     return emitError(writeStdout, asOperationalError(error))
   }
 
-  const rawInput = dependencies.stdin ?? (await readStdin())
-  let input: StdinPayload
+  const readInputFile =
+    dependencies.readInputFile ?? ((path: string) => readFile(path, "utf8"))
+  let input: RoundInput
   try {
-    input = parseStdinPayload(rawInput)
+    input = parseRoundInput(await readInputFile(args.inputFile))
   } catch (error) {
     return emitError(
       writeStdout,
@@ -265,16 +273,9 @@ function emitError(
 
 function usage(): string {
   return [
-    "Usage: node agent_review.ts --agent <name|manual> [options]",
+    "Usage: node agent_review.ts --agent <name|manual> --input-file <path> [options]",
     "",
     `CLI agents: ${AVAILABLE_AGENTS.join(", ")}`,
     "Options: --model, --reasoning, --resume-session-id, --timeout-seconds, --follow-up (manual only)",
   ].join("\n")
-}
-
-async function readStdin(): Promise<string> {
-  let input = ""
-  process.stdin.setEncoding("utf8")
-  for await (const chunk of process.stdin) input += chunk
-  return input
 }

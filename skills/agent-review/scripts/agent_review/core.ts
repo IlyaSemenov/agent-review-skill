@@ -43,15 +43,15 @@ export class OperationalError extends Error {
   }
 }
 
-export type StdinPayload = {
+export type RoundInput = {
   reviewInput?: string
   hostResponse?: string
   hasResponseMarker: boolean
 }
 
-export function parseStdinPayload(payload: string): StdinPayload {
+export function parseRoundInput(payload: string): RoundInput {
   const emptyInputMessage =
-    "Review input is empty. Pipe review material into stdin. " +
+    "Review input is empty. Put review material in the file passed to --input-file. " +
     `Use either plain review input or, for a follow-up, an '${HOST_RESPONSE_MARKER}' line before the host response.`
   const stripped = payload.trim()
   if (!stripped) throw new Error(emptyInputMessage)

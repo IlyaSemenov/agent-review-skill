@@ -3,23 +3,27 @@
 In this path, the user carries messages between the host and reviewer conversations.
 Use `--agent manual`, which emits a prompt without selecting or launching a reviewer CLI.
 
-Pass `--agent manual` only, plus `--follow-up` in later rounds.
+Pass only `--agent manual` and `--input-file`, plus `--follow-up` in later rounds.
 The helper prints a reviewer prompt and exits without invoking a reviewer process.
 
 ## Run round 1
 
 Keep the shell working directory in the repository being reviewed.
-Resolve `SKILL_DIR` to the directory containing `SKILL.md` and invoke the helper by absolute path.
+Write each round's input to a new file outside the repository with your file-writing tool, in your host's scratch directory when it has one, otherwise under `/tmp`.
+Pass that file through `--input-file` and invoke the helper by the absolute path of `scripts/agent_review.ts` in the skill directory as you loaded it, without resolving symlinks.
+Spell that path the same way on every round, and quote it only when it contains characters that require shell quoting.
+Write the helper command on one line as literal words: no shell variables, substitutions, pipes, redirections, or heredocs.
 
-```bash
-cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent manual
+```text
 Review docs/plan.md and src/reviewer.py.
 
 Review focus:
 - Missing decisions and retry behavior.
 - <criteria selected according to review-focus.md>
-EOF
+```
+
+```bash
+node /path/to/agent-review/scripts/agent_review.ts --agent manual --input-file /tmp/agent-review/round-1.md
 ```
 
 Ensure the external reviewer session can access every referenced repository path.
@@ -55,16 +59,16 @@ Keep the issue history across that restart.
 ## Run later rounds
 
 Continue the same external reviewer conversation.
-Invoke the helper with `--follow-up` and the host response below the response marker line.
+Invoke the helper with `--follow-up` and a new input file with the host response below the response marker line.
 
-```bash
-cat <<'EOF' | node "$SKILL_DIR/scripts/agent_review.ts" \
-  --agent manual \
-  --follow-up
+```text
 === AGENT_REVIEW_RESPONSE ===
 Accepted: fixed the missing retry.
 Rejected: the proposed lock is redundant because the caller already holds it.
-EOF
+```
+
+```bash
+node /path/to/agent-review/scripts/agent_review.ts --agent manual --follow-up --input-file /tmp/agent-review/round-2.md
 ```
 
 The emitted follow-up contains only the host response, optional new scope, and fresh `manual_review_token`.

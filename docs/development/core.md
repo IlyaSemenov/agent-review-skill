@@ -7,8 +7,8 @@ Read [User-relay development](user-relay.md) for invariants unique to `--agent m
 
 ## Ownership
 
-Keep the transport-independent review contract in `core.ts`: stdin parsing, prompt construction, JSON extraction, normalization, and parse-repair prompts.
-Keep argument parsing, validation, standard I/O, normalized output, and top-level composition in `cli.ts`.
+Keep the transport-independent review contract in `core.ts`: round input parsing, prompt construction, JSON extraction, normalization, and parse-repair prompts.
+Keep argument parsing, validation, input-file reading, standard output, normalized output, and top-level composition in `cli.ts`.
 Keep reviewer sessions, the round deadline, retries, and transport failure classification in `agentex.ts`, and runtime dependency installation in `runtime.ts`.
 
 ## Round contract
@@ -26,8 +26,9 @@ Keep round numbers out of the helper and the round budget in runtime instruction
 
 ## Input and execution
 
-Interpret first-round stdin as review input.
-Require the literal `=== AGENT_REVIEW_RESPONSE ===` marker line in follow-up stdin, separating optional new scope above it from the host response below it.
+Read round input only from the file passed to `--input-file`, so that the host's helper command consists of literal words that host permission rules can match.
+Interpret first-round input as review input.
+Require the literal `=== AGENT_REVIEW_RESPONSE ===` marker line in follow-up input, separating optional new scope above it from the host response below it.
 Reject a follow-up without the marker and the marker without a follow-up signal, judged by the marker line itself rather than by the sections around it.
 Reject empty input and `--follow-up` for CLI reviewers.
 

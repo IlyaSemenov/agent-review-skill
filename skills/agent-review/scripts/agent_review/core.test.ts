@@ -7,7 +7,7 @@ import {
   looksLikeReviewPayload,
   normalizeReview,
   parseJsonObject,
-  parseStdinPayload,
+  parseRoundInput,
 } from "./core.ts"
 
 function validPayload() {
@@ -21,13 +21,13 @@ function validPayload() {
   }
 }
 
-describe("parseStdinPayload", () => {
+describe("parseRoundInput", () => {
   test("rejects empty input", () => {
-    assert.throws(() => parseStdinPayload(" \n"), /empty/)
+    assert.throws(() => parseRoundInput(" \n"), /empty/)
   })
 
   test("returns plain input", () => {
-    assert.deepEqual(parseStdinPayload(" Review src/auth.ts "), {
+    assert.deepEqual(parseRoundInput(" Review src/auth.ts "), {
       reviewInput: "Review src/auth.ts",
       hasResponseMarker: false,
     })
@@ -35,7 +35,7 @@ describe("parseStdinPayload", () => {
 
   test("splits a marker on its own line", () => {
     const input = `Review src/auth.ts\n${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`
-    assert.deepEqual(parseStdinPayload(input), {
+    assert.deepEqual(parseRoundInput(input), {
       reviewInput: "Review src/auth.ts",
       hostResponse: "Accepted: fixed it.",
       hasResponseMarker: true,
@@ -44,14 +44,14 @@ describe("parseStdinPayload", () => {
 
   test("ignores an inline marker", () => {
     const input = `The document mentions ${HOST_RESPONSE_MARKER} inline.`
-    assert.deepEqual(parseStdinPayload(input), {
+    assert.deepEqual(parseRoundInput(input), {
       reviewInput: input,
       hasResponseMarker: false,
     })
   })
 
   test("supports response-only continuation", () => {
-    assert.deepEqual(parseStdinPayload(`${HOST_RESPONSE_MARKER}\nRejected.`), {
+    assert.deepEqual(parseRoundInput(`${HOST_RESPONSE_MARKER}\nRejected.`), {
       reviewInput: undefined,
       hostResponse: "Rejected.",
       hasResponseMarker: true,

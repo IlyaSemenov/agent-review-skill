@@ -65,6 +65,26 @@ Plan this feature, review the plan with $agent-review and codex, then implement 
 - network access on the first CLI review so the helper can install its runtime dependencies
 - authentication for the selected reviewer in its normal local environment
 
+## Allow the helper in auto-approval modes
+
+In auto-approval modes, such as Codex auto review or Claude Code auto mode, the host's classifier may block the helper because it sends project context to another agent.
+The host then asks you to confirm the review session.
+To prevent the block, allow the helper command once per host and machine by sending this prompt to the host agent:
+
+```text
+Allow the agent-review skill helper to run without approval prompts.
+Find the agent-review skill directory you load skills from (the one containing SKILL.md); if it is a symlink, keep the unresolved path.
+Let HELPER be the absolute path of scripts/agent_review.ts in that directory.
+- If you are Claude Code: add "Bash(node HELPER *)" to permissions.allow in ~/.claude/settings.json, keeping existing entries. Write HELPER as it appears in a shell command, quoted only if it contains characters that require shell quoting.
+- If you are Codex: append prefix_rule(pattern=["node", "HELPER"], decision="allow") to ~/.codex/rules/default.rules, with HELPER as the plain path without shell quotes, and tell me to restart Codex.
+Show me the exact entry you added.
+```
+
+The rule lets any session of that host start a review without a harness block, including sending review input to the reviewer.
+OpenCode and pi reviewers still need your confirmation once per review session because they run with every local tool permission approved.
+In Codex, it also runs the helper outside the sandbox, which the reviewer CLI needs.
+Reinstalling the skill at another path requires a new rule.
+
 ## How It Works
 
 The [review helper](skills/agent-review/scripts/agent_review.ts) is a thin executable entrypoint for an agent-agnostic TypeScript orchestrator executed directly by Node.js.
