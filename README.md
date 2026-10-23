@@ -55,6 +55,12 @@ Say "YOLO" to skip these stops; the agent still stops for decisions only you can
 Plan this feature, review the plan with $agent-review and codex, then implement it. YOLO.
 ```
 
+After a review, you can ask for a meta-review: the agent asks the same reviewer what in the review process helped, what was useless, and what was missing, adds its own view, and gives you one report to pass on to the skill's maintainer.
+
+```text
+Ask the reviewer for a meta-review of this review and add your own view as the host.
+```
+
 ## Requirements
 
 - Node.js 22.18 or newer

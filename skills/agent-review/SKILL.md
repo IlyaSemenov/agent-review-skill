@@ -55,3 +55,7 @@ For a working-tree review, also instruct the reviewer to run `git status --short
 
 Use path-based input for project files that the reviewer can access.
 Materialize larger non-repository subjects in `/tmp` only when the selected review path can access that file.
+
+## Meta-review
+
+If the user asks for feedback on this skill or on how a review went, rather than on the reviewed artifact, also read [Meta-review](meta-review.md).
