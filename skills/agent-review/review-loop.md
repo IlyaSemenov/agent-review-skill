@@ -9,11 +9,12 @@ Follow this sequence for every successful reviewer response, including the first
 1. Give the user a concise, concrete summary of every reviewer issue.
 2. Investigate and judge the issues.
 3. Show the host's decision and intended action for every issue.
-4. Apply accepted changes.
+4. Apply accepted changes and rerun the checks, yours or the reviewer's, that they affect.
 5. Start another round when useful.
 
 Never make an investigation tool call before step 1 or mutate the artifact before step 3.
 Immediately after each reviewer response and before investigating or editing, give the user a concise list of every reported issue, specific enough to show what may change and why it matters.
+When you can judge every issue without tool calls, skip this list and give only the decision update.
 
 Rewrite vague reviewer titles into concrete maintainer-facing problem statements.
 Do not replace the issue list with only a count or a general summary.
@@ -66,7 +67,8 @@ Rejected: the proposed lock is redundant.
 ```
 
 Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
-After fixing an issue more severe than `polish`, or rejecting one for the first time, run another round even when no other issue remains.
+Run another round, even when no other issue remains, after rejecting or partially accepting an issue for the first time, after a fix that departs from the reviewer's recommendation or changes more than the place it names, and after any fix that touches authorization, data, a public contract, or concurrent operations.
+Otherwise, when every issue is fixed by applying its recommendation as proposed, stop without another round and report the fixes under **Fixed**.
 
 Use 10 rounds as a soft working budget.
 Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
