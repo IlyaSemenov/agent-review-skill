@@ -67,6 +67,8 @@ Run broad linters only when the review request asks for them.
 - If the change alters a schema, an API, a storage format, configuration, or dependencies, check old and new consumers, including mixed versions during a rollout, and rollback, rerun, and partial failure of a migration.
   For a dependency upgrade, check the changelog of the versions actually used.
 - If the change replaces an implementation of existing behavior, such as a conversion, a parser, or a query, compare the old and new results on the same inputs, especially on inputs one side cannot represent.
+- When the change's behavior shows only at runtime, such as layout, rendering, animation, or timing, list the scenarios that exercise it — boundary values of its conditions, extreme sizes and content, and state changes after initialization — and check each one statically or report it as residual risk.
+  A proposed fix must hold in the same scenarios.
 
 #### Contracts and boundaries
 
@@ -87,7 +89,7 @@ Run broad linters only when the review request asks for them.
   If the tests would still pass after that breakage, they check an indirect effect or the shape of the implementation, and the gap is a finding unless you state why the risk is not real.
   Answer this mentally; do not modify files or run mutation tests.
   If the answer depends on behavior the code does not define, such as row order without `ORDER BY`, treat it as an assumption.
-- Propose a test only when its expected result can be derived independently of the code under test; when a test could only restate the code, such as the branches of a template or the values its own mock returns, there is no gap.
+- Propose a test only when its expected result can be derived independently of the code under test; when a test could only restate the code, such as the branches of a template, the classes or styles it renders, or the values its own mock returns, there is no gap.
   A test in the change that restates the implementation is a finding; the fix may be to delete it.
 - The fixtures must not already satisfy the expected outcome: an ordering assertion over rows inserted in the expected order, or a filter over data where every row matches, proves nothing.
 - Check the test level against the project's testing conventions.
@@ -95,7 +97,7 @@ Run broad linters only when the review request asks for them.
 #### Documentation
 
 - If the change alters product behavior, a workflow, a boundary, or a development rule, check the owning document, found through the project's agent instructions rather than by the nearest changed file.
-  If users see the change, also check the user-facing documentation.
+  If the change alters behavior that the user-facing documentation describes, also check it.
 - Normative documentation describes the current state, not its history, and does not duplicate a rule owned elsewhere.
 
 #### Placement
