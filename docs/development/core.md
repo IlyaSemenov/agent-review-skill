@@ -17,9 +17,10 @@ Build a full prompt only for the first round and delta-only prompts while the re
 Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
 Limit later prompts to the host response, new review scope, and per-round values that changed.
 
-Keep review criteria in the runtime focus document, which the host adapts and sends as review input.
-Keep in the prompt only what holds for any focus: the reviewer role, the read-only rule, issue quality rules, severity definitions, and the response contract.
-Have the reviewer withhold the low-severity issues it found while higher-severity issues remain open, and set `deferred_polish` only when it actually withholds one.
+Send the review method, `skills/agent-review/review-method.md`, in the full prompt; it owns the review criteria, finding verification, severity, and result categories.
+Keep the rules for composing the request-specific focus in the runtime focus document; the host sends the composed focus as review input.
+Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the mapping of the method's results to the response contract, and the response contract.
+Have the reviewer report the polish it skipped in code that a finding rewrites once that finding is settled.
 
 Select the prompt shape from the transport's continuation signal: `--resume-session-id` for CLI reviewers and `--follow-up` for `--agent manual`.
 Keep round numbers out of the helper and the round budget in runtime instructions.

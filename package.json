@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "biome check --write .",
     "prepare": "lefthook install",
+    "sync-review-method": "curl -fsSL https://raw.githubusercontent.com/IlyaSemenov/top-down-review-skill/main/skills/top-down-review/review-method.md -o skills/agent-review/review-method.md",
     "test": "bun test",
     "types": "tsc --noEmit"
   },

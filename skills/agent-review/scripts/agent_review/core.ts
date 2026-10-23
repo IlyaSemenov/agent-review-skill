@@ -12,11 +12,10 @@ const OUTPUT_KEYS = [
   "issues",
   "open_questions",
   "loop_signal",
-  "deferred_polish",
   "approval_reason",
 ] as const
 const VERDICTS = ["approve", "needs_changes", "discuss"] as const
-const SEVERITIES = ["low", "medium", "high"] as const
+const SEVERITIES = ["blocker", "major", "minor", "polish"] as const
 
 export type Review = {
   verdict: (typeof VERDICTS)[number]
@@ -29,7 +28,6 @@ export type Review = {
   }>
   open_questions: string[]
   loop_signal: boolean
-  deferred_polish: boolean
   approval_reason: string
 }
 
@@ -76,21 +74,31 @@ export function parseRoundInput(payload: string): RoundInput {
 
 export function buildPrompt(options: {
   followUp: boolean
+  reviewMethod: string
   reviewInput?: string
   hostResponse?: string
   manualRoundToken?: string
 }): string {
-  const { followUp, reviewInput, hostResponse, manualRoundToken } = options
+  const {
+    followUp,
+    reviewMethod,
+    reviewInput,
+    hostResponse,
+    manualRoundToken,
+  } = options
   const initialRound = !followUp
   const sections = initialRound
     ? [
         "You are reviewing the host agent's work as a peer reviewer, not as the final authority.",
-        "Your job is to find what the host agent missed, following the review focus stated in the review input.",
+        "Your job is to find what the host agent missed by applying the review method below to the review input, following the review focus stated in it.",
+        "The method is written for a code change; apply it to other subjects as far as its criteria fit.",
         "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
         "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
-        "Formal correctness is not enough: work without an obvious bug is still an issue when it implements a harmful decision, a footgun, or an objectively worse design.",
-        "Raise an alternative design only when it has a concrete advantage; an equally good alternative is not an issue.",
         "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",
+        "",
+        "<review_method>",
+        reviewMethod.trim(),
+        "</review_method>",
       ]
     : []
 
@@ -133,24 +141,19 @@ export function buildPrompt(options: {
     responseInstruction,
     "It must have exactly these keys:",
     schemaDescription,
-    "Choose verdict=approve only when no actionable issues remain and deferred_polish=false.",
+    "Choose verdict=approve only when no actionable issues remain.",
     "Choose verdict=needs_changes when the artifact should change.",
     "Choose verdict=discuss when the round is mainly about disagreement or clarification.",
     "Set loop_signal=true when you are substantially repeating a contested point or another exchange is unlikely to add useful information.",
     "",
-    "Use severity=high when behavior, data, security, or a public contract breaks, or when the approach itself is wrong.",
-    "Use severity=medium for a real cost short of that: a fragile or unclear contract, design debt, an untested real risk, a misleading name or document.",
-    "Use severity=low for local polish: wording, formatting, minor naming, or small consistency fixes.",
-    "Report every high and medium issue.",
-    "Complete every review pass in every round, including passes that find only low issues.",
-    "While any high or medium issue remains open, neither fixed nor settled by a host rejection you accept, withhold the low issues you found; polish is not worth fixing in material that higher-severity fixes may still change.",
-    "Report all remaining low issues once no high or medium issue remains open, and whenever you set loop_signal=true.",
-    "Set deferred_polish=true only when this response withholds at least one low issue you found; otherwise set it to false.",
-    "Group low issues of one kind into a single issue that lists every location.",
-    "In rationale, state the concrete harm. In recommendation, state a concrete change, not general advice.",
-    "Report only issues you still stand behind; omit concerns you dismissed while reviewing.",
+    "Report the method's findings and polish as issues with their severity; put the harm in rationale and the proposed change in recommendation.",
+    "Group polish of one kind into a single issue that lists every location.",
+    "Complete every pass of the review method in every round.",
+    "In approval_reason, name each pass you completed and what it covered.",
+    "Report polish you skipped in code that a finding proposes to rewrite or delete once that finding is settled: the host fixed it, or rejected it and you accept the rejection.",
+    "Put the method's open questions and material problems outside the subject in open_questions, and say when a question needs the user's decision rather than the host's.",
+    "Leave out alternatives and residual risks unless they need a decision; put those in open_questions.",
     "If there are no issues, return an empty issues array.",
-    "In open_questions, say when a question needs the user's decision rather than the host's.",
   )
   return `${sections.join("\n")}\n`
 }
@@ -163,7 +166,6 @@ function describeSchema(): string {
     "    - id: a short stable identifier for the issue",
     "- open_questions: array of strings",
     "- loop_signal: boolean",
-    "- deferred_polish: boolean",
     "- approval_reason: string",
   ].join("\n")
 }
@@ -221,8 +223,6 @@ export function normalizeReview(payload: unknown): Review {
   }
   if (typeof payload.loop_signal !== "boolean")
     throw new Error("loop_signal must be a boolean")
-  if (typeof payload.deferred_polish !== "boolean")
-    throw new Error("deferred_polish must be a boolean")
   if (typeof payload.approval_reason !== "string") {
     throw new Error("approval_reason must be a string")
   }
@@ -234,7 +234,6 @@ export function normalizeReview(payload: unknown): Review {
       .map((item) => item.trim())
       .filter(Boolean),
     loop_signal: payload.loop_signal,
-    deferred_polish: payload.deferred_polish,
     approval_reason: payload.approval_reason.trim(),
   }
 }

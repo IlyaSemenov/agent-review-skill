@@ -16,7 +16,6 @@ function validPayload() {
     issues: [],
     open_questions: [],
     loop_signal: false,
-    deferred_polish: false,
     approval_reason: "looks good",
   }
 }
@@ -61,8 +60,13 @@ describe("parseRoundInput", () => {
 
 describe("prompt construction", () => {
   test("builds a full first-round prompt", () => {
-    const prompt = buildPrompt({ followUp: false, reviewInput: "Review X" })
+    const prompt = buildPrompt({
+      followUp: false,
+      reviewMethod: "# Review method",
+      reviewInput: "Review X",
+    })
     assert.match(prompt, /host agent's work/)
+    assert.match(prompt, /<review_method>\n# Review method\n<\/review_method>/)
     assert.match(prompt, /Review X/)
     assert.match(prompt, /do not modify files or repository state/)
     assert.match(prompt, /approval_reason:/)
@@ -72,18 +76,21 @@ describe("prompt construction", () => {
   test("builds a delta-only continuation", () => {
     const prompt = buildPrompt({
       followUp: true,
+      reviewMethod: "# Review method",
       reviewInput: "Also inspect Y",
       hostResponse: "Fixed X",
     })
     assert.match(prompt, /^Host agent response to your previous feedback:/)
     assert.match(prompt, /New review input:/)
     assert.doesNotMatch(prompt, /host agent's work/)
+    assert.doesNotMatch(prompt, /Review method/)
     assert.doesNotMatch(prompt, /approval_reason:/)
   })
 
   test("adds a quoted relay token", () => {
     const prompt = buildPrompt({
       followUp: false,
+      reviewMethod: "# Review method",
       reviewInput: "Review X",
       manualRoundToken: "0123abcd",
     })
@@ -121,7 +128,7 @@ describe("JSON extraction and normalization", () => {
         {
           id: " i1 ",
           title: " Missing retry ",
-          severity: "high",
+          severity: "blocker",
           recommendation: " Add retry ",
           rationale: " Network operations fail ",
         },
@@ -144,8 +151,20 @@ describe("JSON extraction and normalization", () => {
       /loop_signal/,
     )
     assert.throws(
-      () => normalizeReview({ ...validPayload(), deferred_polish: undefined }),
-      /deferred_polish/,
+      () =>
+        normalizeReview({
+          ...validPayload(),
+          issues: [
+            {
+              id: "i1",
+              title: "title",
+              severity: "high",
+              recommendation: "fix",
+              rationale: "why",
+            },
+          ],
+        }),
+      /unsupported severity: high/,
     )
     assert.throws(
       () =>
@@ -155,7 +174,7 @@ describe("JSON extraction and normalization", () => {
             {
               id: "",
               title: "title",
-              severity: "low",
+              severity: "polish",
               recommendation: "fix",
               rationale: "why",
             },

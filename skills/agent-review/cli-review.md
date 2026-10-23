@@ -42,7 +42,7 @@ Review docs/plan.md and src/reviewer.py.
 
 Review focus:
 - Missing decisions and retry behavior.
-- <criteria selected according to review-focus.md>
+- <focus composed according to review-focus.md>
 ```
 
 ```bash
@@ -98,7 +98,6 @@ The helper prints normalized JSON with this shape:
   "issues": [],
   "open_questions": [],
   "loop_signal": false,
-  "deferred_polish": false,
   "approval_reason": "..."
 }
 ```

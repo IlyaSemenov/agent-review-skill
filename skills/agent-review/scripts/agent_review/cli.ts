@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto"
 import { readFile } from "node:fs/promises"
 import process from "node:process"
+import { fileURLToPath } from "node:url"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import {
@@ -22,6 +23,9 @@ const DEFAULT_TIMEOUT_SECONDS = 900
 export const MAX_TIMEOUT_SECONDS = Math.floor(2_147_483_647 / 1_000)
 
 const MANUAL_AGENT = "manual"
+const REVIEW_METHOD_PATH = fileURLToPath(
+  new URL("../../review-method.md", import.meta.url),
+)
 
 export type CliArgs = {
   agent: AgentName | typeof MANUAL_AGENT
@@ -200,6 +204,7 @@ export async function main(
 
   const prompt = buildPrompt({
     followUp,
+    reviewMethod: await readFile(REVIEW_METHOD_PATH, "utf8"),
     reviewInput: input.reviewInput,
     hostResponse: input.hostResponse,
     manualRoundToken: manual

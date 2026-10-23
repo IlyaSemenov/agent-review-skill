@@ -42,6 +42,8 @@ Classify the requested change by where it acts in the review flow, then read the
 - Changes to `--agent manual`, user relay, relay prompts, or lenient interpretation of pasted reviewer responses: read both [User-relay development](docs/development/user-relay.md) and [Core development](docs/development/core.md).
 - Changes to how a named reviewer is invoked, resumed, parsed, registered, or diagnosed, or to the helper's runtime dependencies: read [agentex development](docs/development/agentex.md).
 - Changes to instructions followed by a host running the installed skill: edit the matching runtime document selected by `skills/agent-review/SKILL.md` and read the development document for the behavior being documented.
+- Changes to review criteria, finding verification, or severity: change `skills/top-down-review/review-method.md` in [top-down-review](https://github.com/IlyaSemenov/top-down-review-skill), then run `bun run sync-review-method`.
+  Never edit `skills/agent-review/review-method.md` here.
 
 Read every listed document when a task spans multiple areas.
 
@@ -51,6 +53,7 @@ Read every listed document when a task spans multiple areas.
 bun run types
 bun run lint
 bun test
+bun run sync-review-method
 ```
 
 ## Documentation rules

@@ -11,7 +11,6 @@ function validPayload() {
     issues: [],
     open_questions: [],
     loop_signal: false,
-    deferred_polish: false,
     approval_reason: "looks good",
   }
 }
@@ -129,6 +128,7 @@ describe("main", () => {
       },
     })
     assert.equal(exitCode, 0)
+    assert.match(capture.output(), /<review_method>\n# Review method\n/)
     assert.match(capture.output(), /Review src\/auth.ts/)
     assert.match(capture.output(), /"a1b2c3d4"/)
   })

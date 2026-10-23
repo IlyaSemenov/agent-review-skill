@@ -85,6 +85,13 @@ OpenCode and pi reviewers still need your confirmation once per review session b
 In Codex, it also runs the helper outside the sandbox, which the reviewer CLI needs.
 Reinstalling the skill at another path requires a new rule.
 
+## Review method
+
+The reviewer applies the [review method](skills/agent-review/review-method.md) of [top-down-review](https://github.com/IlyaSemenov/top-down-review-skill): it checks the purpose and product contract of the change first, then the solution the task needs, and only then the implementation.
+The skill carries its own copy of the method, so you do not need to install top-down-review.
+
+Install top-down-review when you also want a quick single-pass review by your current agent, with a report grouped by WHY, WHAT, and HOW.
+
 ## How It Works
 
 The [review helper](skills/agent-review/scripts/agent_review.ts) is a thin executable entrypoint for an agent-agnostic TypeScript orchestrator executed directly by Node.js.
@@ -96,7 +103,7 @@ With `--agent manual`, the same orchestrator builds the reviewer prompt without 
 
 Each invocation:
 
-- builds reviewer instructions for a concrete subject and a review focus that the calling agent adapts from [default criteria](skills/agent-review/review-focus.md), including naming, consistency with project patterns, and filler in prose and comments
+- builds reviewer instructions for the subject and a request-specific focus composed by the calling agent
 - invokes the selected reviewer and returns structured feedback plus the reviewer's session id when reviewing via CLI
 - prints a prompt for the user to relay when reviewing via user relay
 
@@ -108,7 +115,7 @@ Between rounds, the calling agent:
 - repeats only while another round is still likely to improve the review or clarify a real disagreement
 - treats 10 rounds as a soft budget
 - refreshes that soft budget when you materially change the requirements or review scope
-- defers low-severity polish until higher-severity issues are resolved, so it is not fixed in code that is about to change
+- receives polish only for code that no pending finding is about to rewrite, and the remaining polish once those findings are settled
 - stops when the agent approves or when the remaining disagreement is clear enough that another round is not worth it
 - after each round, reports every issue before investigating or editing, then reports its decision and intended change before applying accepted feedback
 - at the end, reports back to the user a final summary of all issues raised across rounds, grouped into what was fixed, what was rejected and dropped, and what remains unresolved for the user to judge
