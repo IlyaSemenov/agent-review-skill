@@ -83,7 +83,7 @@ If it returns `dependency_unavailable`, allow network access and rerun the same 
 If it returns `sandbox_restriction`, rerun the same command with the required escalation.
 If it returns `agent_cli_unavailable`, tell the user that the selected reviewer's CLI is not installed or not on `PATH`.
 
-Stop the review loop when the helper returns `kind: operational_error`.
+Stop the review loop on every `kind: operational_error` for which no rerun is prescribed above, including `agent_cli_unavailable` and `auth_unavailable` from a launch that was not sandboxed, and when a rerun returns a reason that an earlier launch of the same round already returned.
 Report its reason and message instead of treating it as review feedback.
 When its reason is `timeout`, do not retry with a larger budget; let the user decide whether to diagnose the reviewer or start another review.
 
