@@ -250,7 +250,8 @@ export function buildRepairPrompt(parseError: string): string {
   return [
     "Your previous response did not match the required structured JSON output.",
     `Parsing error: ${parseError}`,
-    "Return exactly one bare JSON object matching the same schema as before.",
+    "Return exactly one bare JSON object with exactly these keys:",
+    describeSchema(),
     "",
   ].join("\n")
 }

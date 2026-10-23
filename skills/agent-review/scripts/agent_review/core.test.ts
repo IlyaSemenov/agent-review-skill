@@ -3,6 +3,7 @@ import { describe, test } from "node:test"
 
 import {
   buildPrompt,
+  buildRepairPrompt,
   HOST_RESPONSE_MARKER,
   looksLikeReviewPayload,
   normalizeReview,
@@ -98,6 +99,12 @@ describe("prompt construction", () => {
     })
     assert.match(prompt, /quadruple-backtick/)
     assert.match(prompt, /manual_review_token: string, exactly "0123abcd"/)
+  })
+
+  test("repeats the current schema in a repair prompt", () => {
+    const prompt = buildRepairPrompt("missing verification")
+    assert.match(prompt, /missing verification/)
+    assert.match(prompt, /- verification: string/)
   })
 })
 

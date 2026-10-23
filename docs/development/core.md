@@ -39,7 +39,7 @@ Apply one wall-clock deadline to runtime dependency installation, reviewer sessi
 Treat it as a bound on waiting: accept a turn that completes within the transport's timeout grace period instead of discarding a finished review.
 Start the parse-repair retry only when at least 30 seconds remain in that same deadline.
 After malformed reviewer output, preserve `agent_cli_failed` with the parse error and raw output even when the repair attempt cannot start or times out.
-Send the parse-repair retry to the same reviewer session.
+Send the parse-repair retry to the same reviewer session with the current response schema.
 After every round, make one bounded best-effort close of the reviewer session object; the reviewer conversation stays resumable.
 After printing the result, allow agentex 10 seconds to finish its own kill escalation, then exit the helper so a reviewer process that outlives its closed session cannot keep it running.
 Return the reviewer's native session id in normalized CLI output.
