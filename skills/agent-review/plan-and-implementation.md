@@ -39,6 +39,9 @@ For each part:
 3. Follow [Review loop](review-loop.md) until the review of the part ends.
 4. Commit the part.
 
+A part that only reproduces content an earlier part's review already covered, such as a vendored copy, needs no review round once you confirm that the result is identical to the reviewed content; name that check in its stop report.
+Output generated from reviewed inputs does not qualify.
+
 The soft round budget from the review loop applies separately to the plan review and to each part.
 
 ## Commit
