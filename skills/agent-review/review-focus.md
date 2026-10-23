@@ -12,3 +12,5 @@ Compose the focus for round 1 and place it in the review input after the subject
 
 Omit the heading when nothing applies.
 When adding scope in a later round, state its focus only if it differs from round 1.
+
+When you already ran checks relevant to the subject, such as tests or browser measurements, list them with their results and what you did not verify under a `Host checks:` heading after the focus.

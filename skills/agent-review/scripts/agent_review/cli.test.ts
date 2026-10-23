@@ -12,6 +12,7 @@ function validPayload() {
     open_questions: [],
     loop_signal: false,
     approval_reason: "looks good",
+    verification: "read the diff",
   }
 }
 

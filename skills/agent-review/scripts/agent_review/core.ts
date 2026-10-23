@@ -13,6 +13,7 @@ const OUTPUT_KEYS = [
   "open_questions",
   "loop_signal",
   "approval_reason",
+  "verification",
 ] as const
 const VERDICTS = ["approve", "needs_changes", "discuss"] as const
 const SEVERITIES = ["blocker", "major", "minor", "polish"] as const
@@ -29,6 +30,7 @@ export type Review = {
   open_questions: string[]
   loop_signal: boolean
   approval_reason: string
+  verification: string
 }
 
 export class OperationalError extends Error {
@@ -148,11 +150,12 @@ export function buildPrompt(options: {
     "",
     "Report the method's findings and polish as issues with their severity; put the harm in rationale and the proposed change in recommendation.",
     "Group polish of one kind into a single issue that lists every location.",
-    "Complete every pass of the review method in every round.",
-    "In approval_reason, name each pass you completed and what it covered.",
+    "In later rounds, verify the host's changes, the invariants they affect, and the host's rebuttals, and review new review input by the full method; do not repeat the review of unchanged material.",
+    "In approval_reason, explain the verdict.",
+    "In verification, state the checks you ran, how, and their results, and the residual risk: material behavior you did not verify, each with the check that would verify it.",
     "Report polish you skipped in code that a finding proposes to rewrite or delete once that finding is settled: the host fixed it, or rejected it and you accept the rejection.",
     "Put the method's open questions and material problems outside the subject in open_questions, and say when a question needs the user's decision rather than the host's.",
-    "Leave out alternatives and residual risks unless they need a decision; put those in open_questions.",
+    "Leave out alternatives unless they need a decision; put those in open_questions.",
     "If there are no issues, return an empty issues array.",
   )
   return `${sections.join("\n")}\n`
@@ -167,6 +170,7 @@ function describeSchema(): string {
     "- open_questions: array of strings",
     "- loop_signal: boolean",
     "- approval_reason: string",
+    "- verification: string",
   ].join("\n")
 }
 
@@ -226,6 +230,9 @@ export function normalizeReview(payload: unknown): Review {
   if (typeof payload.approval_reason !== "string") {
     throw new Error("approval_reason must be a string")
   }
+  if (typeof payload.verification !== "string") {
+    throw new Error("verification must be a string")
+  }
 
   return {
     verdict: verdict as Review["verdict"],
@@ -235,6 +242,7 @@ export function normalizeReview(payload: unknown): Review {
       .filter(Boolean),
     loop_signal: payload.loop_signal,
     approval_reason: payload.approval_reason.trim(),
+    verification: payload.verification.trim(),
   }
 }
 

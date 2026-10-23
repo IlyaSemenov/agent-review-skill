@@ -98,7 +98,8 @@ The helper prints normalized JSON with this shape:
   "issues": [],
   "open_questions": [],
   "loop_signal": false,
-  "approval_reason": "..."
+  "approval_reason": "...",
+  "verification": "..."
 }
 ```
 

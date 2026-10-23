@@ -34,6 +34,8 @@ Reject criticism that is mistaken, overspecified, or based on a wrong assumption
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
 
+When the reviewer's `verification` names a material check you can run, run it or carry it into the final report.
+
 After checking the issues, but before changing the artifact or starting another round, give the user a decision update with one concise line per issue, grouped by decision in this order:
 
 - **Accepted** — `<concrete problem summary>: <what you will change>`.
@@ -82,6 +84,8 @@ Use one concise line per issue and omit empty groups.
 - **Fixed** — accepted issues applied to the artifact.
 - **Dropped** — withdrawn, mistaken, or disproven issues that need no change.
 - **Unresolved** — genuine disagreements and unanswered user decisions that remain for the user to judge.
+- **Checked** — material checks that you or the reviewer ran, each with its result and who ran it.
+- **Not verified** — material residual risk from the reviewer's `verification` that neither a later round nor your own checks covered.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 

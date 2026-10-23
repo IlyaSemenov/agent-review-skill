@@ -21,6 +21,8 @@ Send the review method, `skills/agent-review/review-method.md`, in the full prom
 Keep the rules for composing the request-specific focus in the runtime focus document; the host sends the composed focus as review input.
 Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the mapping of the method's results to the response contract, and the response contract.
 Have the reviewer report the polish it skipped in code that a finding rewrites once that finding is settled.
+Have the reviewer explain the verdict in `approval_reason` and report the checks it ran and its residual risk in `verification`.
+Scope later rounds to the host's changes, the invariants they affect, the host's rebuttals, and new review input.
 
 Select the prompt shape from the transport's continuation signal: `--resume-session-id` for CLI reviewers and `--follow-up` for `--agent manual`.
 Keep round numbers out of the helper and the round budget in runtime instructions.

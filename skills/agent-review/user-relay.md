@@ -50,6 +50,8 @@ If a present token differs, use the context to determine whether the response is
 If no review JSON can be extracted and authorship is unclear, ask whether the message is from the user or reviewer.
 
 If the message is clearly substantive reviewer feedback but contains no extractable review JSON, treat it as reviewer feedback and infer the issues, questions, and outcome from the prose.
+From such prose or from incomplete review JSON, also keep the checks and the limits of checking the reviewer stated.
+When the response states nothing about its checking, treat the scope as unknown rather than free of residual risk, and do not attribute to the reviewer checks it did not state.
 Missing JSON alone does not mean the reviewer lost context.
 
 If the reviewer clearly lost the review subject itself, start a new user-relayed first round, without `--follow-up`, with the complete current subject and a concise summary of settled issues.

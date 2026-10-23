@@ -17,6 +17,7 @@ function validPayload() {
     open_questions: [],
     loop_signal: false,
     approval_reason: "looks good",
+    verification: "read the diff",
   }
 }
 
@@ -70,6 +71,7 @@ describe("prompt construction", () => {
     assert.match(prompt, /Review X/)
     assert.match(prompt, /do not modify files or repository state/)
     assert.match(prompt, /approval_reason:/)
+    assert.match(prompt, /verification:/)
     assert.doesNotMatch(prompt, /manual_review_token/)
   })
 
@@ -124,6 +126,7 @@ describe("JSON extraction and normalization", () => {
     const payload = {
       ...validPayload(),
       open_questions: [" one ", "", "two"],
+      verification: " Ran bun test: passed. Scrolling not checked. ",
       issues: [
         {
           id: " i1 ",
@@ -136,12 +139,21 @@ describe("JSON extraction and normalization", () => {
     }
     const review = normalizeReview(payload)
     assert.deepEqual(review.open_questions, ["one", "two"])
+    assert.equal(
+      review.verification,
+      "Ran bun test: passed. Scrolling not checked.",
+    )
     const [issue] = review.issues
     assert.ok(issue)
     assert.equal(issue.id, "i1")
   })
 
   test("rejects malformed review fields", () => {
+    const { verification: _, ...withoutVerification } = validPayload()
+    assert.throws(
+      () => normalizeReview(withoutVerification),
+      /expected review payload/,
+    )
     assert.throws(
       () => normalizeReview({ ...validPayload(), verdict: "maybe" }),
       /verdict/,
@@ -149,6 +161,10 @@ describe("JSON extraction and normalization", () => {
     assert.throws(
       () => normalizeReview({ ...validPayload(), loop_signal: "false" }),
       /loop_signal/,
+    )
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), verification: ["tests"] }),
+      /verification/,
     )
     assert.throws(
       () =>
