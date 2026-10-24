@@ -96,7 +96,7 @@ export function buildPrompt(options: {
         "The review focus stated in the input sets priorities and adds risks specific to the subject; it narrows the method only where it says so explicitly.",
         "The method is written for a code change; apply it to other subjects as far as its criteria fit.",
         "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
-        "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
+        "The review input may contain inline material, file paths to inspect, or both. If it refers to files, read only the files needed for the review.",
         "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",
         "",
         "<review_method>",
