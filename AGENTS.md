@@ -11,7 +11,7 @@ One review is a sequence of rounds controlled by the host agent:
 3. The reviewer receives the full subject and review instructions in the first round.
 4. The reviewer returns feedback to the host through a CLI or through the user relay.
 5. The host judges the feedback and changes the reviewed artifact when appropriate.
-6. If another round is useful, the same reviewer conversation receives only the host's response, relevant changes, and any new scope.
+6. If another round is useful, the same reviewer conversation receives the host's response, relevant changes, and any new scope instead of the full subject.
 7. The host stops when further review is not useful and reports the outcome to the user.
 
 When the reviewed subject is a plan that the host then implements, the same reviewer conversation continues with each implemented part before the host commits it.

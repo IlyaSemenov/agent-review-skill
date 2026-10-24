@@ -143,7 +143,8 @@ describe("main", () => {
       writeStdout: capture.write,
     })
     assert.equal(exitCode, 0)
-    assert.match(capture.output(), /^Host agent response/)
+    assert.match(capture.output(), /^In this round, verify the host's changes/)
+    assert.match(capture.output(), /\nHost agent response/)
     assert.doesNotMatch(capture.output(), /Review input:/)
   })
 
@@ -245,7 +246,8 @@ describe("main", () => {
     })
     assert.equal(exitCode, 0)
     assert.equal(resumedSessionId, "review-1")
-    assert.match(sentPrompt, /^Host agent response/)
+    assert.match(sentPrompt, /^In this round, verify the host's changes/)
+    assert.match(sentPrompt, /\nHost agent response/)
     assert.doesNotMatch(sentPrompt, /host agent's work/)
   })
 

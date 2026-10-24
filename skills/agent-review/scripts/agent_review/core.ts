@@ -92,7 +92,8 @@ export function buildPrompt(options: {
   const sections = initialRound
     ? [
         "You are reviewing the host agent's work as a peer reviewer, not as the final authority.",
-        "Your job is to find what the host agent missed by applying the review method below to the review input, following the review focus stated in it.",
+        "Your job is to find what the host agent missed by applying every pass of the review method below to the review input.",
+        "The review focus stated in the input sets priorities and adds risks specific to the subject; it narrows the method only where it says so explicitly.",
         "The method is written for a code change; apply it to other subjects as far as its criteria fit.",
         "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
         "The review material may come from this prompt, the resumed session context, inline material, file paths to inspect, or a combination of those. If it refers to files, read only the files needed for the review.",
@@ -102,7 +103,7 @@ export function buildPrompt(options: {
         reviewMethod.trim(),
         "</review_method>",
       ]
-    : []
+    : describeFollowUpRules(reviewInput !== undefined)
 
   if (hostResponse !== undefined) {
     if (sections.length > 0) sections.push("")
@@ -150,15 +151,26 @@ export function buildPrompt(options: {
     "",
     "Report the method's findings and polish as issues with their severity; put the harm in rationale and the proposed change in recommendation.",
     "Group polish of one kind into a single issue that lists every location.",
-    "In later rounds, verify the host's changes, the invariants they affect, and the host's rebuttals, and review new review input by the full method; do not repeat the review of unchanged material.",
     "In approval_reason, explain the verdict.",
     "In verification, state the checks you ran, how, and their results, and the residual risk: material behavior you did not verify, each with the check that would verify it.",
-    "Report polish you skipped in code that a finding proposes to rewrite or delete once that finding is settled: the host fixed it, or rejected it and you accept the rejection.",
     "Put the method's open questions and material problems outside the subject in open_questions, and say when a question needs the user's decision rather than the host's.",
     "Leave out alternatives unless they need a decision; put those in open_questions.",
     "If there are no issues, return an empty issues array.",
   )
   return `${sections.join("\n")}\n`
+}
+
+function describeFollowUpRules(hasReviewInput: boolean): string[] {
+  return [
+    "In this round, verify the host's changes, the invariants and consumers they affect, including documentation that describes changed behavior, and the host's rebuttals.",
+    ...(hasReviewInput
+      ? [
+          "Review the new review input by every pass of the method, even when an earlier round approved a plan for it.",
+        ]
+      : []),
+    "For each pass, skip only material that the pass already covered in this conversation and that the changes do not affect.",
+    "Report polish you skipped in code that a finding proposes to rewrite or delete once that finding is settled: the host fixed it, or rejected it and you accept the rejection.",
+  ]
 }
 
 function describeSchema(): string {

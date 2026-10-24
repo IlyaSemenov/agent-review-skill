@@ -66,7 +66,7 @@ Rejected: the caller already holds the lock, so the proposed mutex is redundant.
 node /path/to/agent-review/scripts/agent_review.ts --agent claude --resume-session-id 0199a6f2-4c1e-7d30-9b8a-3f5e2d1c0a47 --input-file /tmp/agent-review/round-2.md
 ```
 
-The helper sends a delta-only follow-up and does not repeat the role, original subject, schema, or unchanged guidance.
+The helper sends the rules for later rounds with the round input and does not repeat the role, original subject, method, or schema.
 If the session is lost, start a new review instead of reconstructing it from pasted history.
 The helper reports a lost session as `reason: session_lost`.
 

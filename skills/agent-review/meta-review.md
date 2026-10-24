@@ -14,6 +14,7 @@ Above the response marker, put the meta-review request:
 - The subject is the review process as the reviewer saw it — its prompts, including the review method, the review input, your responses, and the rounds — not the reviewed artifact.
 - Ask what in the prompts, the review method, the review input, and the rounds helped find real problems, what was useless, redundant, or contradictory, and what was missing, each point tied to a concrete moment of this review.
 - Ask which of its own findings or recommendations turned out wrong and what would have prevented them.
+- Say that the helper's rules for later rounds do not apply to this round.
 - State how the answer maps to the response schema for this round only:
   - `verdict` assesses the skill;
   - each improvement proposal is an issue whose severity is the cost of leaving it unfixed for future reviews and whose recommendation names the prompt passage, method section, or review-input practice to change and the change;

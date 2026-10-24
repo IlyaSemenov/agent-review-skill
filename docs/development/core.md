@@ -13,16 +13,22 @@ Keep reviewer sessions, the round deadline, retries, and transport failure class
 
 ## Round contract
 
-Build a full prompt only for the first round and delta-only prompts while the reviewer conversation retains the original subject.
+Build a full prompt for the first round and a follow-up prompt for each later round while the reviewer conversation retains the original subject.
 Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
-Limit later prompts to the host response, new review scope, and per-round values that changed.
+Limit follow-up prompts to the later-round rules, the host response, new review scope, and per-round values that changed.
 
 Send the review method, `skills/agent-review/review-method.md`, in the full prompt; it owns the review criteria, finding verification, severity, and result categories.
 Keep the rules for composing the request-specific focus in the runtime focus document; the host sends the composed focus as review input.
+Tell the reviewer that the focus sets priorities and narrows the method only where it says so explicitly.
 Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the mapping of the method's results to the response contract, and the response contract.
-Have the reviewer report the polish it skipped in code that a finding rewrites once that finding is settled.
 Have the reviewer explain the verdict in `approval_reason` and report the checks it ran and its residual risk in `verification`.
-Scope later rounds to the host's changes, the invariants they affect, the host's rebuttals, and new review input.
+
+Start every follow-up prompt with the later-round rules, so that host text after them can replace them for one round, as a meta-review does:
+
+- verify the host's changes, the invariants and consumers they affect, including documentation of changed behavior, and the host's rebuttals;
+- review new review input, when the round has it, by every pass of the method;
+- skip, for each pass, only material that the pass already covered and the changes do not affect;
+- report the polish skipped in code that a finding rewrites once that finding is settled.
 
 Select the prompt shape from the transport's continuation signal: `--resume-session-id` for CLI reviewers and `--follow-up` for `--agent manual`.
 Keep round numbers out of the helper and the round budget in runtime instructions.

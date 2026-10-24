@@ -72,5 +72,5 @@ Rejected: the proposed lock is redundant because the caller already holds it.
 node /path/to/agent-review/scripts/agent_review.ts --agent manual --follow-up --input-file /tmp/agent-review/round-2.md
 ```
 
-The emitted follow-up contains only the host response, optional new scope, and fresh `manual_review_token`.
+The emitted follow-up contains the rules for later rounds, the host response, optional new scope, and a fresh `manual_review_token`.
 Give the complete follow-up prompt to the user for relay into the same reviewer conversation.

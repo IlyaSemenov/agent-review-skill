@@ -76,14 +76,15 @@ describe("prompt construction", () => {
     assert.doesNotMatch(prompt, /manual_review_token/)
   })
 
-  test("builds a delta-only continuation", () => {
+  test("builds a continuation with rules before the round input", () => {
     const prompt = buildPrompt({
       followUp: true,
       reviewMethod: "# Review method",
       reviewInput: "Also inspect Y",
       hostResponse: "Fixed X",
     })
-    assert.match(prompt, /^Host agent response to your previous feedback:/)
+    assert.match(prompt, /^In this round, verify the host's changes/)
+    assert.match(prompt, /\nHost agent response to your previous feedback:/)
     assert.match(prompt, /New review input:/)
     assert.doesNotMatch(prompt, /host agent's work/)
     assert.doesNotMatch(prompt, /Review method/)

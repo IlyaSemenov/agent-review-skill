@@ -117,7 +117,7 @@ Between rounds, the calling agent:
 
 - inspects the feedback and decides what to accept, what to reject, and what to defend
 - continues the same reviewer conversation through CLI resume or user relay
-- sends only the round delta rather than repeating the role, original subject, or response schema
+- sends the round delta with a short reminder of the rules for later rounds rather than repeating the role, original subject, or response schema
 - repeats only while another round is still likely to improve the review or clarify a real disagreement
 - treats 10 rounds as a soft budget
 - refreshes that soft budget when you materially change the requirements or review scope
