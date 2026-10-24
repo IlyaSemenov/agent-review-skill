@@ -66,6 +66,7 @@ Run broad linters only when the review request asks for them.
 - When the change introduces a constant — a limit, a threshold, a period — search for an existing setting or constant governing the same quantity and check that they agree.
 - If the change alters a schema, an API, a storage format, configuration, or dependencies, check old and new consumers, including mixed versions during a rollout, and rollback, rerun, and partial failure of a migration.
   For a dependency upgrade, check the changelog of the versions actually used.
+- When the change alters what a value means while its type stays the same, such as a function that now returns `name@version` where it returned `name`, check every consumer of that value; the type checker will not catch one that misreads the new form.
 - If the change replaces an implementation of existing behavior, such as a conversion, a parser, or a query, compare the old and new results on the same inputs, especially on inputs one side cannot represent.
 - When the change's behavior shows only at runtime, such as layout, rendering, animation, or timing, list the scenarios that exercise it — boundary values of its conditions, extreme sizes and content, and state changes after initialization — and check each one statically or report it as residual risk.
   A proposed fix must hold in the same scenarios.
@@ -98,6 +99,11 @@ Run broad linters only when the review request asks for them.
 
 - If the change alters product behavior, a workflow, a boundary, or a development rule, check the owning document, found through the project's agent instructions rather than by the nearest changed file.
   If the change alters behavior that the user-facing documentation describes, also check it.
+  A statement that the change made false is a finding, also in a document the change did not touch, such as a status table row that still describes the old behavior.
+- Check whether each documentation addition is needed at all before reviewing its wording.
+  An addition is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
+  For example, a README paragraph about an error adds nothing when the command's output already explains the error.
+  When fixing an existing sentence would be enough, propose that fix instead of the addition.
 - Normative documentation describes the current state, not its history, and does not duplicate a rule owned elsewhere.
 
 #### Placement
@@ -105,6 +111,7 @@ Run broad linters only when the review request asks for them.
 Check that each addition stands where its reader looks for it, not where it was convenient to append:
 
 - A text fits the reader and purpose of its document and of the passage it joins: an implementation or maintenance detail does not belong in a user-facing description of behavior.
+- An added text matches the level of detail of the neighboring sections: a paragraph about one rare case in a section that describes every other case in one line is a finding.
 - A function, a test, or a `describe` block takes its place in the logical order of its file, such as happy path → main contract → errors → edge cases.
 
 #### Naming
@@ -118,6 +125,8 @@ Check that each addition stands where its reader looks for it, not where it was 
 #### Prose
 
 - User-facing texts must read as natural product wording, rather than code identifiers or literal translations.
+- Read each new or changed user-facing text, such as documentation, a release note, or a product message, as its reader: it describes what they observe, in terms they know.
+  A release note says what changed for the user, such as "`sync` no longer deletes files that were never uploaded", not how the code does it now.
 - Flag filler in texts, documents, and comments: text that states the obvious, retells the code, repeats nearby text, or hedges generically.
   Propose deleting it or a tighter replacement.
 - Polish an MR/PR description only when the requester of the review is its author.
@@ -129,6 +138,7 @@ Keep a finding only if you can answer each question:
 
 - Which concrete scenario or consumer exposes the problem?
 - What confirms it and every assumption behind it: code, a contract, a test, or documentation?
+  Confirm it along the whole path the input takes, not only where you saw the condition: an earlier step may transform the input or send it elsewhere.
   For the behavior of a framework, ORM, database, or library, check the version the project actually uses, from the lockfile, even when it is not installed locally.
 - Does the change introduce or materially worsen the problem, or leave unsolved what its task requires?
   Mention a material problem that fails this check in one line as outside the change.
