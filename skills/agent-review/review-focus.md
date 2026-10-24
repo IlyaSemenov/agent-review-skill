@@ -9,6 +9,7 @@ Compose the focus for round 1 and place it in the review input after the subject
 - When the user explicitly narrowed the review, name the parts of the method to apply.
 - Add risks specific to the subject that the method does not name, such as idempotency of a queue consumer.
 - Name areas to check, not your own conclusions about them.
+  List changed user-facing texts, such as documentation, release notes, and product messages, among those areas.
 
 Omit the heading when nothing applies.
 When adding scope in a later round, state its focus only if it differs from round 1.

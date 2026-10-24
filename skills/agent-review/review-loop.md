@@ -69,6 +69,7 @@ Rejected: the proposed lock is redundant.
 Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
 Run another round, even when no other issue remains, after rejecting or partially accepting an issue for the first time, after a fix that departs from the reviewer's recommendation or changes more than the place it names, and after any fix that touches authorization, data, a public contract, or concurrent operations.
 Otherwise, when every issue is fixed by applying its recommendation as proposed, stop without another round and report the fixes under **Fixed**.
+Stopping ends the exchange on the current issues; a review that needs a [final round](#final-round) runs it before the final report.
 
 Use 10 rounds as a soft working budget.
 Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
@@ -77,6 +78,31 @@ Continue beyond it only while recent rounds are producing substantive new inform
 Refresh the soft budget only when user-authored input materially changes the requirements or review scope.
 Relayed reviewer output, an ordinary response to feedback, and fixes within the existing scope stay within the current budget.
 Keep the reviewer session when refreshing the soft budget.
+
+## Final round
+
+When the subject is a change to project files, such as a diff, a commit, a branch, or uncommitted changes, run a final round in the same reviewer session after the exchange on the other issues stops, even when the reviewer has approved.
+
+Above the response marker, list the items to check, without describing any of them as done or correct:
+
+- user-facing texts the change touches, such as documentation, release notes, and product messages;
+- documentation that describes the changed behavior, even where the change does not touch it;
+- changed comments;
+- new functions and tests;
+- the commit message you will use, when you will commit the change.
+
+Ask the reviewer to apply the method's Documentation, Placement, Naming, and Prose checks to the listed items, in particular that:
+
+- each text is needed at all, and no existing statement became false;
+- each text is simple and clear, free of filler, as detailed as its neighbors, and written for its reader in terms they know;
+- new functions and tests stand in the logical order of their files;
+- new names and terms match the ones the project already uses;
+- the commit message is accurate and follows the project's commit conventions, or the style of `git log` when none are documented.
+
+Ask the reviewer to state in `verification` its conclusion for each listed item, such as "the README paragraph is not needed: the command output already explains the error", not only that it checked the item.
+Before ending the review, check that the response gives a conclusion for every listed item; for the items it skipped, run another round that asks only about them.
+
+When a fix after the final round changes behavior, run another round that rechecks the affected code and the texts that describe that behavior.
 
 ## Final report
 
