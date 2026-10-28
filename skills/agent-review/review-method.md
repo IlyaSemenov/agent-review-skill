@@ -74,6 +74,7 @@ Run broad linters only when the review request asks for them.
 #### Contracts and boundaries
 
 - For each new entry point, file, and public export, check that its module and layer match the owner of its contract — domain API, transport schema, response projection, persistence, UI, or test helper — according to the project's boundary documentation.
+- When the change extracts code from several places into a shared function or module, check that the extracted parts have one owner and one reason to change; code that only looks alike stays with its owners.
 - Check whether new public types can express an invalid state or add unjustified optional fields.
 - For a new public export, check that its declaration states the contract callers rely on; an inferred type is fine when the inferred shape is the intended contract.
 - After a move or refactor, no old paths, wrappers, dead branches, or compatibility TODOs may remain unless existing consumers still need them.
