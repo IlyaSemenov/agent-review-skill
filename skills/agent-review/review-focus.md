@@ -6,6 +6,7 @@ The review focus adapts the method to the request and the subject; do not restat
 Compose the focus for round 1 and place it in the review input after the subject, under a `Review focus:` heading:
 
 - Put concerns the user named first.
+- State as requirements the user's decisions that the reviewer cannot learn from the subject or the project, such as an exception to a project convention or a changed plan decision.
 - When the user explicitly narrowed the review, name the parts of the method to apply.
 - Add risks specific to the subject that the method does not name, such as idempotency of a queue consumer.
 - Name areas to check, not your own conclusions about them.
@@ -13,5 +14,7 @@ Compose the focus for round 1 and place it in the review input after the subject
 
 Omit the heading when nothing applies.
 When adding scope in a later round, state its focus only if it differs from round 1.
+
+Do not narrow the review yourself in any round: state a check you emphasize, such as behavior equivalence of a refactoring, as a priority rather than as the only check.
 
 When you already ran checks relevant to the subject, such as tests or browser measurements, list them with their results and what you did not verify under a `Host checks:` heading after the focus.
