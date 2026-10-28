@@ -26,6 +26,7 @@ Have the reviewer explain the verdict in `approval_reason` and report the checks
 Start every follow-up prompt with the later-round rules, so that host text after them can replace them for one round, as a meta-review does:
 
 - verify the host's changes, the invariants and consumers they affect, including documentation of changed behavior, and the host's rebuttals;
+- check changes that implement the reviewer's own recommendations as strictly as any other change;
 - review new review input, when the round has it, by every pass of the method;
 - skip, for each pass, only material that the pass already covered and the changes do not affect;
 - report the polish skipped in code that a finding rewrites once that finding is settled.

@@ -163,6 +163,7 @@ export function buildPrompt(options: {
 function describeFollowUpRules(hasReviewInput: boolean): string[] {
   return [
     "In this round, verify the host's changes, the invariants and consumers they affect, including documentation that describes changed behavior, and the host's rebuttals.",
+    "Check changes that implement your own earlier recommendations as strictly as any other change.",
     ...(hasReviewInput
       ? [
           "Review the new review input by every pass of the method, even when an earlier round approved a plan for it.",
