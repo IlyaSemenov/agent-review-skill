@@ -54,7 +54,7 @@ Leave issues that need the user's decision unchanged until the user answers, and
 
 ## Prepare another round
 
-Send only accepted points and what changed, rejected points and why, and points left for the user to decide.
+Send only accepted points with what changed and where, rejected points and why, points left for the user to decide, and the user's new decisions stated as requirements.
 Do not resend the original subject or unchanged instructions.
 
 Put the response marker line in every follow-up input, with any new scope above it and the host response below it:
