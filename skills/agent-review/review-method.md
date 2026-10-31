@@ -114,6 +114,8 @@ Check that each addition stands where its reader looks for it, not where it was 
 - A text fits the reader and purpose of its document and of the passage it joins: an implementation or maintenance detail does not belong in a user-facing description of behavior.
 - An added text matches the level of detail of the neighboring sections: a paragraph about one rare case in a section that describes every other case in one line is a finding.
 - A function, a test, or a `describe` block takes its place in the logical order of its file, such as happy path → main contract → errors → edge cases.
+  The diff does not show this order: for each file where the change adds one, read the names of the existing ones in file order and check that each addition stands at its logical place among them.
+  An addition appended at the end of its file or block is a finding unless the end is its logical place.
 
 #### Naming
 
