@@ -36,7 +36,7 @@ For each part:
 2. Continue the same reviewer session.
    Above the response marker, supply the change according to the subject rules in `SKILL.md` and a fresh focus composed according to [Review focus](review-focus.md) that replaces the plan-stage focus.
    Add adherence to the agreed plan and undocumented deviations from it, and tell the reviewer to reopen a settled plan decision only on a new fact, an error, or a changed requirement.
-3. Follow [Review loop](review-loop.md) until the review of the part ends, including its final round.
+3. Follow [Review loop](review-loop.md) until the review of the part ends, including its prose round when it needs one.
 4. Commit the part.
 
 A part that only reproduces content an earlier part's review already covered, such as a vendored copy, needs no review round once you confirm that the result is identical to the reviewed content; name that check in its stop report.
@@ -47,7 +47,7 @@ The soft round budget from the review loop applies separately to the plan review
 ## Commit
 
 Commit only the part's changes.
-Write the message before the review's [final round](review-loop.md#final-round), according to the project's commit conventions, or follow the style of `git log` when none are documented.
+Write the message according to the project's commit conventions, or follow the style of `git log` when none are documented, and supply it for review as [Review focus](review-focus.md) describes for texts published with the change.
 If unrelated changes in the working tree or index cannot be separated safely, stop and ask.
 
 Keep each part in one commit.
