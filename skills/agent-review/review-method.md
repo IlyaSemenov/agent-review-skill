@@ -30,6 +30,8 @@ Run broad linters only when the review request asks for them.
 
 ## What to check
 
+The checks below are not exhaustive: when you notice a risk outside them, check it too and verify it like any other finding.
+
 ### Purpose and contract (WHY)
 
 - Formulate the product problem, the user, the expected outcome, and the business invariants, and check that the new rules agree with each other, with the domain model, with role permissions, and with neighboring scenarios.
@@ -50,6 +52,7 @@ Run broad linters only when the review request asks for them.
 - Report anything the change adds that is not needed as a finding, not as an alternative:
   - a second source of truth for the same rule or value;
   - state or a handler that an existing owner already covers;
+  - logic that duplicates an existing function, component, or library utility instead of reusing it;
   - a layer that can be removed;
   - an abstraction or flexibility without a concrete use.
 - Report runtime code as a finding when a declarative mechanism the project uses, such as CSS, a schema constraint, or a type, fully expresses the same behavior.
@@ -83,6 +86,8 @@ Run broad linters only when the review request asks for them.
 
 - File layout, the split of responsibilities into functions, error handling, and idioms must follow the neighboring code.
   A new pattern needs a reason the existing one does not fit.
+- When the change follows a neighboring pattern that the project's conventions or the target solution show to be worse, report it rather than accept it for consistency.
+  Name the tradeoff between consistency and the better pattern and propose the safe next step, such as applying the better pattern to the new code and moving the neighbors in a separate task; when the choice is not obvious, raise it as an open question.
 
 #### Tests
 
@@ -101,6 +106,9 @@ Run broad linters only when the review request asks for them.
 - If the change alters product behavior, a workflow, a boundary, or a development rule, check the owning document, found through the project's agent instructions rather than by the nearest changed file.
   If the change alters behavior that the user-facing documentation describes, also check it.
   A statement that the change made false is a finding, also in a document the change did not touch, such as a status table row that still describes the old behavior.
+- Check each factual claim in new or changed documentation and comments, and in wording you propose, against the contract or code it describes.
+  Verify a claim about public behavior by following a public call to the value it returns, not by finding the code meant to produce that value, which another path may bypass.
+  Check every case the claim covers, such as each way to reach the same data; when the claim holds only for some of them, it must name its limits.
 - Check whether each documentation addition is needed at all before reviewing its wording.
   An addition is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
   For example, a README paragraph about an error adds nothing when the command's output already explains the error.
@@ -144,13 +152,17 @@ Keep a finding only if you can answer each question:
   Confirm it along the whole path the input takes, not only where you saw the condition: an earlier step may transform the input or send it elsewhere.
   For the behavior of a framework, ORM, database, or library, check the version the project actually uses, from the lockfile, even when it is not installed locally.
 - Does the change introduce or materially worsen the problem, or leave unsolved what its task requires?
+  When the change wraps or reimplements a library or existing code, check how that code behaves in the same scenario before attributing the behavior to the change.
   Mention a material problem that fails this check in one line as outside the change.
-- Which minimal change fixes its root cause, and does it work in the proposed form?
-  When the finding prescribes a specific shape of the fix, sketch it against the actual code.
+- What outcome must the fix achieve to remove the root cause?
 
 Drop a finding that fails the check; do not downgrade an unproven hypothesis to `minor` or to a question.
 An open product decision stays an open question under an explicit assumption, see [Purpose and contract](#purpose-and-contract-why).
 If confirmation needs a runtime check you did not run, report a residual risk and name the check.
+
+Propose the minimal change that achieves the required outcome only after checking that it works in the proposed form.
+When the finding prescribes a specific shape of the fix, sketch it against the actual code and check it on every use of the API or value it changes, such as other callers and chained calls, not only where the problem shows.
+When no change passes this check, give the outcome and leave the form of the fix open.
 
 ## Results
 
@@ -163,6 +175,7 @@ Sort what the review found into these categories:
 - **Residual risk** — what remained unchecked or uncertain, and material problems outside the change.
 
 Give each finding its file and line, the concrete harm, and a concrete change rather than general advice.
+If no fix is confirmed, state the required outcome instead.
 When a finding proposes reworking the solution, name the tradeoff that justifies the rework.
 Leave out findings withdrawn and severities changed while reasoning.
 
