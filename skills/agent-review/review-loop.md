@@ -60,7 +60,15 @@ When such a claim must stay, report it as unverified in the next host response, 
 
 ## Prepare another round
 
-Send only accepted points with what changed and where, rejected points and why, points left for the user to decide, the user's new decisions stated as requirements, and claims in your changes that remain unverified.
+Send:
+
+- accepted points with what changed and where;
+- rejected points and why;
+- points left for the user to decide;
+- the user's new decisions stated as requirements;
+- changes the user asked for outside the reviewer's points, with what changed and where;
+- claims in your changes that remain unverified.
+
 Do not resend the original subject or unchanged instructions.
 
 Put the response marker line in every follow-up input, with any new scope above it and the host response below it:
