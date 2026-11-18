@@ -43,6 +43,9 @@ export class OperationalError extends Error {
   }
 }
 
+/** The working-tree changes since the reviewer's previous round: a range of two snapshots, or a marker that the range could not be computed. */
+type WorkingTreeChanges = { from: string; to: string } | { unavailable: true }
+
 export type RoundInput = {
   reviewInput?: string
   hostResponse?: string
@@ -79,6 +82,7 @@ export function buildPrompt(options: {
   reviewMethod: string
   reviewInput?: string
   hostResponse?: string
+  changes?: WorkingTreeChanges
   manualRoundToken?: string
 }): string {
   const {
@@ -86,6 +90,7 @@ export function buildPrompt(options: {
     reviewMethod,
     reviewInput,
     hostResponse,
+    changes,
     manualRoundToken,
   } = options
   const initialRound = !followUp
@@ -104,6 +109,10 @@ export function buildPrompt(options: {
         "</review_method>",
       ]
     : describeFollowUpRules(reviewInput !== undefined)
+
+  if (!initialRound && changes !== undefined) {
+    sections.push("", describeChanges(changes))
+  }
 
   if (hostResponse !== undefined) {
     if (sections.length > 0) sections.push("")
@@ -172,6 +181,21 @@ function describeFollowUpRules(hasReviewInput: boolean): string[] {
     "For each pass, skip only material that the pass already covered in this conversation and that the changes do not affect.",
     "Report polish you skipped in code that a finding proposes to rewrite or delete once that finding is settled: the host fixed it, or rejected it and you accept the rejection.",
   ]
+}
+
+function describeChanges(changes: WorkingTreeChanges): string {
+  if ("unavailable" in changes) {
+    return "The changes to the working tree since your previous round are unavailable in this round. Check the current review subject for changes the host response does not mention, using the paths, materials, and commands of the latest review input that defines it, and `git status --short` when the subject is in the working tree."
+  }
+  const { from, to } = changes
+  if (from === to) {
+    return "The working tree matches the snapshot taken at the start of your previous round."
+  }
+  return [
+    `Run \`git diff --no-relative --name-status ${from} ${to}\` to list every change to the working tree since the start of your previous round, including new and deleted files.`,
+    `Then run \`git diff --no-relative ${from} ${to} -- ':(top,literal)<path>'\`, repeating that argument for each listed path within the review subject, and skip it when no listed path is within the subject. Verify every hunk in those paths, including those the host response does not mention.`,
+    "Find what changed through this diff, not by rerunning the commands of earlier review input that show the whole subject, such as its diff against a base branch, and read the working tree only for surrounding code and for the invariants and consumers the changes affect.",
+  ].join(" ")
 }
 
 function describeSchema(): string {

@@ -16,6 +16,26 @@ function validPayload() {
   }
 }
 
+const TREE_A = "a".repeat(40)
+const TREE_B = "b".repeat(40)
+
+function createPromptRecordingReviewer(prompts: string[]): LoadReviewer {
+  return async () => async () => ({
+    sessionId: "review-1",
+    send: async (prompt) => {
+      prompts.push(prompt)
+      return {
+        summary: JSON.stringify(validPayload()),
+        costUsd: null,
+        status: "completed",
+        errorCode: null,
+        errorMessage: null,
+      }
+    },
+    close: async () => {},
+  })
+}
+
 function captureOutput(): {
   output: () => string
   write: (text: string) => void
@@ -49,6 +69,7 @@ describe("CLI argument contract", () => {
         model: "sonnet",
         reasoning: undefined,
         resumeSessionId: "review-1",
+        sinceSnapshot: undefined,
         timeoutSeconds: undefined,
       },
     )
@@ -88,11 +109,45 @@ describe("CLI argument contract", () => {
     )
   })
 
+  test("rejects a snapshot without a resumed CLI session", () => {
+    assert.throws(
+      () =>
+        validateArgs({
+          agent: "codex",
+          inputFile: "round.md",
+          sinceSnapshot: TREE_A,
+        }),
+      /requires --resume-session-id/,
+    )
+  })
+
+  test("rejects a malformed snapshot", () => {
+    assert.throws(
+      () =>
+        validateArgs({
+          agent: "codex",
+          inputFile: "round.md",
+          resumeSessionId: "review-1",
+          sinceSnapshot: "--output=x",
+        }),
+      /snapshot value from the previous round/,
+    )
+  })
+
   test("rejects CLI-only options for user relay", () => {
     assert.throws(
       () =>
         validateArgs({ agent: "manual", inputFile: "round.md", model: "x" }),
       /--model cannot be used/,
+    )
+    assert.throws(
+      () =>
+        validateArgs({
+          agent: "manual",
+          inputFile: "round.md",
+          sinceSnapshot: TREE_A,
+        }),
+      /--since-snapshot cannot be used/,
     )
   })
 
@@ -251,6 +306,83 @@ describe("main", () => {
     assert.doesNotMatch(sentPrompt, /host agent's work/)
   })
 
+  test("returns the working-tree snapshot with a CLI review", async () => {
+    const capture = captureOutput()
+    const exitCode = await main({
+      argv: ["--agent", "codex", "--input-file", "round.md"],
+      readInputFile: async () => "Review src/auth.ts",
+      cwd: "/repo",
+      writeStdout: capture.write,
+      loadReviewer: createPromptRecordingReviewer([]),
+      takeRoundSnapshot: async () => ({ snapshot: TREE_A }),
+    })
+    assert.equal(exitCode, 0)
+    assert.equal(JSON.parse(capture.output()).snapshot, TREE_A)
+  })
+
+  test("points a resumed review at the changes since the given snapshot", async () => {
+    const capture = captureOutput()
+    const prompts: string[] = []
+    let since: string | undefined
+    const exitCode = await main({
+      argv: [
+        "--agent",
+        "codex",
+        "--input-file",
+        "round.md",
+        "--resume-session-id",
+        "review-1",
+        "--since-snapshot",
+        TREE_A,
+      ],
+      readInputFile: async () => `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      cwd: "/repo",
+      writeStdout: capture.write,
+      loadReviewer: createPromptRecordingReviewer(prompts),
+      takeRoundSnapshot: async (options) => {
+        since = options.since
+        return { snapshot: TREE_B, changes: { from: TREE_A, to: TREE_B } }
+      },
+    })
+    assert.equal(exitCode, 0)
+    assert.equal(since, TREE_A)
+    assert.match(
+      prompts[0] ?? "",
+      new RegExp(`git diff --no-relative --name-status ${TREE_A} ${TREE_B}`),
+    )
+    assert.equal(JSON.parse(capture.output()).snapshot, TREE_B)
+  })
+
+  test("runs the review and reports a snapshot failure", async () => {
+    const capture = captureOutput()
+    const prompts: string[] = []
+    const exitCode = await main({
+      argv: [
+        "--agent",
+        "codex",
+        "--input-file",
+        "round.md",
+        "--resume-session-id",
+        "review-1",
+        "--since-snapshot",
+        TREE_A,
+      ],
+      readInputFile: async () => `${HOST_RESPONSE_MARKER}\nAccepted: fixed it.`,
+      cwd: "/repo",
+      writeStdout: capture.write,
+      loadReviewer: createPromptRecordingReviewer(prompts),
+      takeRoundSnapshot: async () => ({
+        snapshot: TREE_B,
+        error: "The previous snapshot is missing or is not a tree",
+      }),
+    })
+    assert.equal(exitCode, 0)
+    assert.match(prompts[0] ?? "", /since your previous round are unavailable/)
+    const output = JSON.parse(capture.output())
+    assert.equal(output.snapshot, TREE_B)
+    assert.match(output.snapshot_error, /missing or is not a tree/)
+  })
+
   test("rejects an unmarked CLI follow-up", async () => {
     const capture = captureOutput()
     const exitCode = await main({
@@ -324,6 +456,7 @@ describe("main", () => {
       readInputFile: async () => "Review X",
       writeStdout: capture.write,
       loadReviewer,
+      takeRoundSnapshot: async () => ({}),
     })
     assert.equal(exitCode, 1)
     assert.equal(JSON.parse(capture.output()).timeout_seconds, 7)

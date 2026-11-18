@@ -54,7 +54,13 @@ The helper sends the full reviewer role, rules, subject, and response contract.
 ## Resume later rounds
 
 Pass the previous output's `session_id` value through `--resume-session-id`.
+Supply the changes to the review subject:
+
+- For files in the working tree that Git does not ignore, pass the previous output's `snapshot` value through `--since-snapshot`.
+- For other material, send its changed text or the path where the reviewer can read its current version.
+
 Write the host response below the response marker line in a new input file, as described in [Review loop](review-loop.md).
+With `--since-snapshot`, the helper gives the reviewer commands that show the working-tree changes since its previous round, when it can compute them; do not paste diffs into the host response.
 
 ```text
 === AGENT_REVIEW_RESPONSE ===
@@ -63,7 +69,7 @@ Rejected: the caller already holds the lock, so the proposed mutex is redundant.
 ```
 
 ```bash
-node /path/to/agent-review/scripts/agent_review.ts --agent claude --resume-session-id 0199a6f2-4c1e-7d30-9b8a-3f5e2d1c0a47 --input-file /tmp/agent-review/round-2.md
+node /path/to/agent-review/scripts/agent_review.ts --agent claude --resume-session-id 0199a6f2-4c1e-7d30-9b8a-3f5e2d1c0a47 --since-snapshot 9c1e4d7a2b3f5e6081a9c7d2e4f6b8a0c1d3e5f7 --input-file /tmp/agent-review/round-2.md
 ```
 
 The helper sends the rules for later rounds with the round input and does not repeat the role, original subject, method, or schema.
@@ -94,6 +100,7 @@ The helper prints normalized JSON with this shape:
 ```json
 {
   "session_id": "...",
+  "snapshot": "...",
   "verdict": "approve",
   "issues": [],
   "open_questions": [],
@@ -104,3 +111,6 @@ The helper prints normalized JSON with this shape:
 ```
 
 Use `session_id` for the next helper invocation.
+The helper returns `snapshot` when it recorded the working tree, which requires the review working directory to be in a Git work tree.
+It returns `snapshot_error` when it could not record the snapshot or look up the previous one; `snapshot` is still present in the latter case.
+When the output has `snapshot_error`, tell the user its message in one line and continue the review.

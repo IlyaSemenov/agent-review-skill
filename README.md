@@ -101,7 +101,7 @@ Install top-down-review when you also want a quick single-pass review by your cu
 ## How It Works
 
 The [review helper](skills/agent-review/scripts/agent_review.ts) is a thin executable entrypoint for an agent-agnostic TypeScript orchestrator executed directly by Node.js.
-Its implementation separates the review contract, reviewer transport, runtime dependency installation, and CLI composition in [`scripts/agent_review/`](skills/agent-review/scripts/agent_review/).
+Its implementation separates the review contract, reviewer transport, runtime dependency installation, working-tree snapshots, and CLI composition in [`scripts/agent_review/`](skills/agent-review/scripts/agent_review/).
 It runs one review round per invocation; the calling agent drives the loop.
 
 For CLI review, it drives the reviewer's native CLI through [`@agentex/agent`](https://github.com/dynamismlabs/agentex/tree/main/packages/agent) and continues the reviewer's own session in later rounds.
@@ -111,6 +111,7 @@ Each invocation:
 
 - builds reviewer instructions for the subject and a request-specific focus composed by the calling agent
 - invokes the selected reviewer and returns structured feedback plus the reviewer's session id when reviewing via CLI
+- records the working tree, including untracked files that are not ignored, as a tree object in the repository's Git object database when reviewing via CLI in a Git repository, so that a later round can compare the working-tree files under review
 - prints a prompt for the user to relay when reviewing via user relay
 
 Between rounds, the calling agent:

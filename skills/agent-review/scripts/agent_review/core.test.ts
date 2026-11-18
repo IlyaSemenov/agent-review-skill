@@ -91,6 +91,51 @@ describe("prompt construction", () => {
     assert.doesNotMatch(prompt, /approval_reason:/)
   })
 
+  test("points a continuation at the working-tree changes since the previous round", () => {
+    const prompt = buildPrompt({
+      followUp: true,
+      reviewMethod: "# Review method",
+      hostResponse: "Fixed X",
+      changes: { from: "a".repeat(40), to: "b".repeat(40) },
+    })
+    const range = `${"a".repeat(40)} ${"b".repeat(40)}`
+    assert.match(
+      prompt,
+      new RegExp(
+        `rebuttals\\.[^]*\`git diff --no-relative --name-status ${range}\`[^]*\`git diff --no-relative ${range} -- ':\\(top,literal\\)<path>'\`[^]*Host agent response`,
+      ),
+    )
+  })
+
+  test("reports matching snapshots to a continuation", () => {
+    const tree = "c".repeat(40)
+    const prompt = buildPrompt({
+      followUp: true,
+      reviewMethod: "# Review method",
+      hostResponse: "Rejected X",
+      changes: { from: tree, to: tree },
+    })
+    assert.match(
+      prompt,
+      /matches the snapshot taken at the start of your previous round/,
+    )
+    assert.doesNotMatch(prompt, /git diff/)
+  })
+
+  test("tells a continuation that the working-tree changes are unavailable", () => {
+    const prompt = buildPrompt({
+      followUp: true,
+      reviewMethod: "# Review method",
+      hostResponse: "Fixed X",
+      changes: { unavailable: true },
+    })
+    assert.match(
+      prompt,
+      /changes to the working tree since your previous round are unavailable/,
+    )
+    assert.doesNotMatch(prompt, /git diff --no-relative/)
+  })
+
   test("adds a quoted relay token", () => {
     const prompt = buildPrompt({
       followUp: false,

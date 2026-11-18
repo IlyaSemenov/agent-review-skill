@@ -67,6 +67,8 @@ export async function requestReview(options: {
   agent: AgentName
   prompt: string
   timeoutSeconds: number
+  /** The `performance.now()` value at which the round budget started; defaults to the call time. */
+  startedAt?: number
   resumeSessionId?: string
   model?: string
   reasoning?: string
@@ -77,13 +79,14 @@ export async function requestReview(options: {
     agent,
     prompt,
     timeoutSeconds,
+    startedAt = performance.now(),
     resumeSessionId,
     model,
     reasoning,
     cwd,
     loadReviewer = loadAgentexReviewer,
   } = options
-  const deadline = performance.now() + timeoutSeconds * 1_000
+  const deadline = startedAt + timeoutSeconds * 1_000
 
   try {
     let openSession: OpenReviewerSession

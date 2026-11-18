@@ -18,8 +18,10 @@ import {
   parseRoundInput,
   type RoundInput,
 } from "./core.ts"
+import { SNAPSHOT_PATTERN, takeRoundSnapshot } from "./snapshot.ts"
 
 const DEFAULT_TIMEOUT_SECONDS = 900
+const MAX_SNAPSHOT_MS = 60_000
 export const MAX_TIMEOUT_SECONDS = Math.floor(2_147_483_647 / 1_000)
 
 const MANUAL_AGENT = "manual"
@@ -34,6 +36,7 @@ export type CliArgs = {
   reasoning?: string
   followUp?: boolean
   resumeSessionId?: string
+  sinceSnapshot?: string
   timeoutSeconds?: number
 }
 
@@ -63,6 +66,7 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
         reasoning: { type: "string" },
         "follow-up": { type: "boolean" },
         "resume-session-id": { type: "string" },
+        "since-snapshot": { type: "string" },
         "timeout-seconds": { type: "string" },
         help: { type: "boolean", short: "h" },
       },
@@ -95,6 +99,7 @@ export function parseArgs(argv: string[]): CliArgs | { help: true } {
     reasoning: stringValue(values.reasoning),
     followUp: values["follow-up"] === true || undefined,
     resumeSessionId: stringValue(values["resume-session-id"]),
+    sinceSnapshot: stringValue(values["since-snapshot"]),
     timeoutSeconds: parseIntegerOption(
       stringValue(values["timeout-seconds"]),
       "--timeout-seconds",
@@ -116,6 +121,26 @@ export function validateArgs(args: CliArgs): void {
       "--follow-up is only for --agent manual; continue a CLI review with --resume-session-id",
     )
   }
+  if (
+    !manual &&
+    args.sinceSnapshot !== undefined &&
+    args.resumeSessionId === undefined
+  ) {
+    throw new OperationalError(
+      "invalid_input",
+      "--since-snapshot requires --resume-session-id",
+    )
+  }
+  if (
+    !manual &&
+    args.sinceSnapshot !== undefined &&
+    !SNAPSHOT_PATTERN.test(args.sinceSnapshot)
+  ) {
+    throw new OperationalError(
+      "invalid_input",
+      "--since-snapshot must be the snapshot value from the previous round's output",
+    )
+  }
   if (!manual && args.timeoutSeconds !== undefined && args.timeoutSeconds < 1) {
     throw new OperationalError(
       "invalid_input",
@@ -135,6 +160,7 @@ export function validateArgs(args: CliArgs): void {
   if (args.agent === MANUAL_AGENT) {
     const forbidden = [
       ["--resume-session-id", args.resumeSessionId],
+      ["--since-snapshot", args.sinceSnapshot],
       ["--model", args.model],
       ["--reasoning", args.reasoning],
       ["--timeout-seconds", args.timeoutSeconds],
@@ -155,6 +181,7 @@ export async function main(
     readInputFile?: (path: string) => Promise<string>
     cwd?: string
     loadReviewer?: LoadReviewer
+    takeRoundSnapshot?: typeof takeRoundSnapshot
     randomToken?: () => string
     writeStdout?: (text: string) => void
   } = {},
@@ -202,33 +229,57 @@ export async function main(
     )
   }
 
-  const prompt = buildPrompt({
-    followUp,
-    reviewMethod: await readFile(REVIEW_METHOD_PATH, "utf8"),
-    reviewInput: input.reviewInput,
-    hostResponse: input.hostResponse,
-    manualRoundToken: manual
-      ? (dependencies.randomToken ?? (() => randomBytes(4).toString("hex")))()
-      : undefined,
-  })
+  const reviewMethod = await readFile(REVIEW_METHOD_PATH, "utf8")
   if (args.agent === MANUAL_AGENT) {
-    writeStdout(prompt)
+    writeStdout(
+      buildPrompt({
+        followUp,
+        reviewMethod,
+        reviewInput: input.reviewInput,
+        hostResponse: input.hostResponse,
+        manualRoundToken: (
+          dependencies.randomToken ?? (() => randomBytes(4).toString("hex"))
+        )(),
+      }),
+    )
     return 0
   }
 
+  const cwd = dependencies.cwd ?? process.cwd()
   const timeoutSeconds = args.timeoutSeconds ?? DEFAULT_TIMEOUT_SECONDS
+  const startedAt = performance.now()
+  const roundSnapshot = await (
+    dependencies.takeRoundSnapshot ?? takeRoundSnapshot
+  )({
+    cwd,
+    since: args.sinceSnapshot,
+    timeoutMs: Math.min(MAX_SNAPSHOT_MS, (timeoutSeconds * 1_000) / 10),
+  })
+  const prompt = buildPrompt({
+    followUp,
+    reviewMethod,
+    reviewInput: input.reviewInput,
+    hostResponse: input.hostResponse,
+    changes:
+      roundSnapshot.changes ??
+      (args.sinceSnapshot === undefined ? undefined : { unavailable: true }),
+  })
+
   try {
     const review = await requestReview({
       agent: args.agent,
       prompt,
       timeoutSeconds,
+      startedAt,
       resumeSessionId: args.resumeSessionId,
       model: args.model,
       reasoning: args.reasoning,
-      cwd: dependencies.cwd ?? process.cwd(),
+      cwd,
       loadReviewer: dependencies.loadReviewer,
     })
-    writeStdout(`${JSON.stringify(review, undefined, 2)}\n`)
+    writeStdout(
+      `${JSON.stringify({ ...review, snapshot: roundSnapshot.snapshot, snapshot_error: roundSnapshot.error }, undefined, 2)}\n`,
+    )
     return 0
   } catch (error) {
     const operational = asOperationalError(error)
@@ -281,6 +332,6 @@ function usage(): string {
     "Usage: node agent_review.ts --agent <name|manual> --input-file <path> [options]",
     "",
     `CLI agents: ${AVAILABLE_AGENTS.join(", ")}`,
-    "Options: --model, --reasoning, --resume-session-id, --timeout-seconds, --follow-up (manual only)",
+    "Options: --model, --reasoning, --resume-session-id, --since-snapshot, --timeout-seconds, --follow-up (manual only)",
   ].join("\n")
 }

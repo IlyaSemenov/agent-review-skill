@@ -9,13 +9,13 @@ Read [User-relay development](user-relay.md) for invariants unique to `--agent m
 
 Keep the transport-independent review contract in `core.ts`: round input parsing, prompt construction, JSON extraction, normalization, and parse-repair prompts.
 Keep argument parsing, validation, input-file reading, standard output, normalized output, and top-level composition in `cli.ts`.
-Keep reviewer sessions, the round deadline, retries, and transport failure classification in `agentex.ts`, and runtime dependency installation in `runtime.ts`.
+Keep reviewer sessions, the round deadline, retries, and transport failure classification in `agentex.ts`, runtime dependency installation in `runtime.ts`, and working-tree snapshots in `snapshot.ts`.
 
 ## Round contract
 
 Build a full prompt for the first round and a follow-up prompt for each later round while the reviewer conversation retains the original subject.
 Tell the reviewer in the full prompt not to modify files or repository state and to use tools only for inspection and read-only checks.
-Limit follow-up prompts to the later-round rules, the host response, new review scope, and per-round values that changed.
+Limit follow-up prompts to the later-round rules, the working-tree changes since the previous round, the host response, new review scope, and per-round values that changed.
 
 Send the review method, `skills/agent-review/review-method.md`, in the full prompt; it owns the review criteria, finding verification, severity, and result categories.
 Keep the rules for composing the request-specific focus in the runtime focus document; the host sends the composed focus as review input.
@@ -50,6 +50,23 @@ Send the parse-repair retry to the same reviewer session with the current respon
 After every round, make one bounded best-effort close of the reviewer session object; the reviewer conversation stays resumable.
 After printing the result, allow agentex 10 seconds to finish its own kill escalation, then exit the helper so a reviewer process that outlives its closed session cannot keep it running.
 Return the reviewer's native session id in normalized CLI output.
+
+## Working-tree snapshots
+
+Before sending the prompt of a CLI round whose working directory is in a Git work tree, record the working tree, including untracked files that are not ignored, as a tree object, and return its name as `snapshot`.
+Stage into a temporary copy of the index inside the Git directory, with Git hooks disabled, so that Git leaves the repository's index and working tree untouched; clean and process filters configured in the repository still run.
+Bound recording by a tenth of the round budget, at most 60 seconds, and count it against the round deadline.
+Take no snapshots for `--agent manual`.
+
+Accept `--since-snapshot` only together with `--resume-session-id`.
+With it, tell the reviewer after the later-round rules one of these:
+
+- to list the changes with `git diff --no-relative --name-status <previous> <current>`, then diff the listed paths within the review subject, if any, as `':(top,literal)<path>'` pathspecs and verify every hunk in them, including hunks the host response does not mention, finding what changed through this diff rather than by rerunning the commands of earlier review input that show the whole subject;
+- that the working tree matches the previous snapshot;
+- that the changes are unavailable in this round, so it checks the current review subject, as defined by the latest review input, for changes the host response does not mention.
+
+Never fail a round because of a snapshot: when recording fails, or the previous snapshot cannot be looked up or is not a tree, run the round without the missing parts and return the reason as `snapshot_error`.
+Treat only Git's "not a git repository" error as the absence of a work tree, and accept as the previous snapshot only a tree object itself, not a commit or tag that peels to one.
 
 ## Host-specific behavior
 
