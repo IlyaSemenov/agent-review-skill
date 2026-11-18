@@ -132,3 +132,8 @@ State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
 Omit questions already answered during the loop.
+
+## Review the next subject
+
+When the user asks for another review in the same conversation, such as of the next commit in a series, continue the reviewer conversation of the previous review: send the new subject and its focus as new scope above the response marker.
+Start a new reviewer conversation only when the user asks for one or names a different reviewer, when the previous conversation is lost, or when the new subject has nothing in common with the previous one, such as a different project or task.

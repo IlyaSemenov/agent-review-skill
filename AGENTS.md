@@ -8,7 +8,7 @@ One review is a sequence of rounds controlled by the host agent:
 
 1. The user asks a host agent to obtain a peer review.
 2. The host identifies the review subject and selects whether the review runs via CLI or user relay according to `skills/agent-review/SKILL.md`.
-3. The reviewer receives the full subject and review instructions in the first round.
+3. The reviewer receives the full subject and review instructions in the first round of its conversation; a later subject in the same conversation arrives as new scope.
 4. The reviewer returns feedback to the host through a CLI or through the user relay.
 5. The host judges the feedback and changes the reviewed artifact when appropriate.
 6. If another round is useful, the same reviewer conversation receives the host's response, relevant changes, and any new scope instead of the full subject.

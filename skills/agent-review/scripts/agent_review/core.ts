@@ -194,7 +194,7 @@ function describeChanges(changes: WorkingTreeChanges): string {
   return [
     `Run \`git diff --no-relative --name-status ${from} ${to}\` to list every change to the working tree since the start of your previous round, including new and deleted files.`,
     `Then run \`git diff --no-relative ${from} ${to} -- ':(top,literal)<path>'\`, repeating that argument for each listed path within the review subject, and skip it when no listed path is within the subject. Verify every hunk in those paths, including those the host response does not mention.`,
-    "Find what changed through this diff, not by rerunning the commands of earlier review input that show the whole subject, such as its diff against a base branch, and read the working tree only for surrounding code and for the invariants and consumers the changes affect.",
+    "Find what changed through this diff, not by rerunning the commands of earlier review input that show the whole subject, such as its diff against a base branch; to check these changes, read the working tree only for surrounding code and for the invariants and consumers they affect.",
   ].join(" ")
 }
 
