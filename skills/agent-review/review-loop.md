@@ -52,9 +52,15 @@ Apart from the **Needs your decision** group, the decision update is information
 Continue immediately with the other issues unless the user interrupts.
 Leave issues that need the user's decision unchanged until the user answers, and list unanswered ones under **Unresolved** in the final report.
 
+After applying a change that adds or rewords a factual claim in documentation or comments, verify the claim before the next round or the final report.
+Check it against the contract or code it describes.
+For a claim about public behavior, run a public call it describes and check every case the claim covers, such as each way to reach the same data; reading the code meant to produce the result is not enough.
+Narrow or remove a claim you cannot verify.
+When such a claim must stay, report it as unverified in the next host response, and under **Not verified** if it stays unverified when the review stops.
+
 ## Prepare another round
 
-Send only accepted points with what changed and where, rejected points and why, points left for the user to decide, and the user's new decisions stated as requirements.
+Send only accepted points with what changed and where, rejected points and why, points left for the user to decide, the user's new decisions stated as requirements, and claims in your changes that remain unverified.
 Do not resend the original subject or unchanged instructions.
 
 Put the response marker line in every follow-up input, with any new scope above it and the host response below it:
@@ -111,7 +117,7 @@ Use one concise line per issue and omit empty groups.
 - **Dropped** — withdrawn, mistaken, or disproven issues that need no change.
 - **Unresolved** — genuine disagreements and unanswered user decisions that remain for the user to judge.
 - **Checked** — material checks that you or the reviewer ran, each with its result and who ran it.
-- **Not verified** — material residual risk from the reviewer's `verification` that neither a later round nor your own checks covered.
+- **Not verified** — material residual risk from the reviewer's `verification` that neither a later round nor your own checks covered, and claims in your changes that remain unverified.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
