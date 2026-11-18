@@ -84,7 +84,7 @@ Stop when the reviewer approves, no actionable issues remain, the same disagreem
 Run another round, even when no other issue remains, after rejecting or partially accepting an issue for the first time, after a fix that departs from the reviewer's recommendation or changes more than the place it names, and after any fix that touches authorization, data, a public contract, or concurrent operations.
 A `polish` fix that words its recommendation differently without changing its meaning does not depart from it.
 Otherwise, when every issue is fixed by applying its recommendation as proposed, stop without another round and report the fixes under **Fixed**.
-Stopping ends the exchange on the current issues; when the subject is a change to project files, run the [prose round](#prose-round) before the final report.
+Stopping ends the exchange on the current issues; run the [prose round](#prose-round) before the final report when it applies.
 
 Use 10 rounds as a soft working budget.
 Treat that budget as a prompt to reconsider the value of continuing, not as an automatic stop.
@@ -98,8 +98,9 @@ Keep the reviewer session when refreshing the soft budget.
 
 The prose round is a separate round that checks how the change reads, such as its texts, names, and the order of its tests.
 When the subject is a change to project files, such as a diff, a commit, a branch, or uncommitted changes, run a prose round in the same reviewer session after the exchange on the other issues stops, even when the reviewer has approved.
-Skip it only when no item listed below applies to the change.
-It checks only the items listed below; no earlier round replaces it.
+Skip it when no item listed below applies to the change.
+When the change consists only of texts, such as documentation or prompts, put the list and the requests below into the round that first reviews the change, such as round 1 or the round that sends an implemented part of a plan, instead of running a separate round.
+For other changes, run it as a separate round that checks only the items listed below; no earlier round replaces it.
 
 Above the response marker, list the items to check, without describing any of them as done or correct:
 
