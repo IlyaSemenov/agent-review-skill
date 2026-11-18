@@ -46,6 +46,8 @@ If no host document exists, run the helper in the foreground with the required p
 Review only a clearly identified subject from context, such as a diff, plan, design note, issue summary, code snippet, or project files.
 In Plan Mode, use the current plan text as the subject.
 If multiple targets are plausible or the request is underspecified, ask what to review.
+When an earlier review already covered part of the subject, choose whether to review the whole subject or only the part that review did not cover, such as the commits after the one it reviewed, unless the user said which.
+State the choice to the user with the subject.
 
 State the subject and compose the review focus according to [Review focus](review-focus.md).
 If the subject is a plan that you will implement yourself, also follow [Plan and implementation](plan-and-implementation.md).
