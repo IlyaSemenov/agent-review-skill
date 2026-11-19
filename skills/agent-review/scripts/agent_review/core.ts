@@ -100,6 +100,7 @@ export function buildPrompt(options: {
         "Your job is to find what the host agent missed by applying every pass of the review method below to the review input.",
         "The review focus stated in the input sets priorities and adds risks specific to the subject; it narrows the method only where it says so explicitly.",
         "The method is written for a code change; apply it to other subjects as far as its criteria fit.",
+        "Use this method for the review procedure and the response contract below for the response format; do not load other review skills.",
         "Act only as a reviewer: do not modify files or repository state, and use tools only for inspection and read-only checks.",
         "The review input may contain inline material, file paths to inspect, or both. If it refers to files, read only the files needed for the review.",
         "Accept that some concerns may be rejected; consensus is unnecessary when the artifact is defensible.",

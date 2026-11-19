@@ -20,7 +20,8 @@ Limit follow-up prompts to the later-round rules, the working-tree changes since
 Send the review method, `skills/agent-review/review-method.md`, in the full prompt; it owns the review criteria, finding verification, severity, and result categories.
 Keep the rules for composing the request-specific focus in the runtime focus document; the host sends the composed focus as review input.
 Tell the reviewer that the focus sets priorities and narrows the method only where it says so explicitly.
-Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the mapping of the method's results to the response contract, and the response contract.
+Tell the reviewer to use the method and the response contract instead of loading other review skills.
+Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the rule on other review skills, the mapping of the method's results to the response contract, and the response contract.
 Have the reviewer explain the verdict in `approval_reason` and report the checks it ran and its residual risk in `verification`.
 
 Start every follow-up prompt with the later-round rules, so that host text after them can replace them for one round, as a meta-review does:
