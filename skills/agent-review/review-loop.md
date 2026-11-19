@@ -52,6 +52,10 @@ Apart from the **Needs your decision** group, the decision update is information
 Continue immediately with the other issues unless the user interrupts.
 Leave issues that need the user's decision unchanged until the user answers, and list unanswered ones under **Unresolved** in the final report.
 
+When the answer to an open question determines whether the change is needed at all, settle it before applying fixes that depend on the answer; handle the other issues as usual.
+Answer it yourself when the materials you can check settle it; otherwise put the question under **Needs your decision** once, naming the issues that wait for it.
+When the change is needed, judge the waiting issues on their merits; when it is not, list them under **Dropped** with that reason.
+
 After applying a change that adds or rewords a factual claim in documentation or comments, verify the claim before the next round or the final report.
 Check it against the contract or code it describes.
 For a claim about public behavior, run a public call it describes and check every case the claim covers, such as each way to reach the same data; reading the code meant to produce the result is not enough.
@@ -134,6 +138,7 @@ Use one concise line per issue and omit empty groups.
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
 If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
+List each unanswered question only in this group, naming the issues that depend on its answer, if any.
 Omit questions already answered during the loop.
 
 ## Review the next subject
