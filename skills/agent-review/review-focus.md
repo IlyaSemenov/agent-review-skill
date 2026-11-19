@@ -6,7 +6,11 @@ The review focus adapts the method to the request and the subject; do not restat
 Compose the focus for round 1 and place it in the review input after the subject, under a `Review focus:` heading:
 
 - Put concerns the user named first.
-- State as requirements the user's decisions that the reviewer cannot learn from the subject or the project, such as an exception to a project convention or a changed plan decision.
+- State the need behind the change separately from its solution: the concrete scenario it serves, such as a user's task in the product or an operation of a library's consumer.
+  If you have evidence of that need that the reviewer cannot access, such as the user's report or the consumer's code, include the relevant excerpt.
+  When the solution came from another agent or an earlier review, name that source and present the solution as one candidate, unless the user explicitly chose that solution; agreeing to its cost is not such a choice.
+  When you know that the change reverses a decision recorded in the project, name that decision.
+- State as requirements only the decisions the user made that the reviewer cannot learn from the subject or the project, such as an exception to a project convention or a changed plan decision, with the reason when the user gave one.
 - When the user explicitly narrowed the review, name the parts of the method to apply.
 - Add risks specific to the subject that the method does not name, such as idempotency of a queue consumer.
 - Name areas to check, not your own conclusions about them.
