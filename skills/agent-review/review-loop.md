@@ -58,6 +58,8 @@ For a claim about public behavior, run a public call it describes and check ever
 Narrow or remove a claim you cannot verify.
 When such a claim must stay, report it as unverified in the next host response, and under **Not verified** if it stays unverified when the review stops.
 
+After applying a change that adds or rewrites the heading or the opening sentence of a section, reread the whole section and check that the heading and opening together convey its main purpose and scope, rather than one use taken from an example.
+
 ## Prepare another round
 
 Send:
