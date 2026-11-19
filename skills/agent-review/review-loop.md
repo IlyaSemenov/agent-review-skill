@@ -115,6 +115,7 @@ Above the response marker, list the items to check, without describing any of th
 Ask the reviewer to apply the method's Documentation, Placement, Naming, and Prose checks to the listed items, and to check the texts published with the change as [Review focus](review-focus.md) describes.
 
 Ask the reviewer to state in `verification` its conclusion for each listed item, such as "the README paragraph is not needed: the command output already explains the error", not only that it checked the item.
+Tell the reviewer it may group items that need no changes under one conclusion if it names every item in the group.
 Before ending the review, check that the response gives a conclusion for every listed item; for the items it skipped, run another round that asks only about them.
 
 When a fix after the prose round changes behavior, run another round that rechecks the affected code and the texts that describe that behavior.
