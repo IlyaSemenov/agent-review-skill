@@ -48,6 +48,12 @@ Classify the requested change by where it acts in the review flow, then read the
 
 Read every listed document when a task spans multiple areas.
 
+## Changes after a meta-review
+
+When a change responds to a meta-review, write each new or changed rule for the common cases within its scope, rather than only for the incident the meta-review describes.
+Depending on the rule, these cases may include the kinds of subjects reviewed, usually code changes, plans, and documents in product projects, the review paths it affects, or both.
+When the change is reviewed, state in the review input that the incident is one example and name those common cases.
+
 ## Commands
 
 ```bash
