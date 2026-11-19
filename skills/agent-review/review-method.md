@@ -39,6 +39,9 @@ The checks below are not exhaustive: when you notice a risk outside them, check 
 - For a bug fix, check that the change removes every symptom and affected surface from the report, on the report's data when it has some.
 - A change that extends or reinterprets the task statement is a finding only when the product decision is harmful or contradicts an explicit requirement.
   A mockup detail may be an example rather than a requirement.
+- When the change removes a guarantee that consumers get, including one preserved by an earlier decision to reject the proposed alternative, name the guarantee and the operation a consumer needs from the change, even when the task statement asks for the removal.
+  Check whether that operation is possible while preserving the guarantee, such as through a narrower API; if it is and nothing else requires the removal, the removal is a finding.
+  When the need stays unclear, raise an open question that names the missing requirement or constraint, and continue under an explicit assumption.
 - Look for footguns — behavior that provokes a mistake, irreversible loss, a hidden data change, or a bypass of the expected process — and assess the effects on other roles, neighboring user flows, existing data, and integrations.
 - If the business meaning is ambiguous, raise the assumption as an open question and continue the assessment under it.
 
@@ -112,6 +115,7 @@ The checks below are not exhaustive: when you notice a risk outside them, check 
   When a claim draws a line between correct use and a mistake, test the claim and any wording you propose against one minimal example on each side.
   For example, to check when a wrapper can finish before the operation it starts, compare a wrapper that returns the operation's promise with one that discards it.
   Include both examples in a finding about where that line falls.
+- When a documented rule is drawn from one case, such as an instruction written after an incident, check that it also works in the common cases within its scope.
 - Before reviewing the wording of a documentation addition, or proposing one, check whether it is needed at all.
   An addition in the change is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
   Drop an addition of your own, such as a cross-reference, in the same case.
@@ -143,7 +147,8 @@ Check that each addition stands where its reader looks for it, not where it was 
 - Read each new or changed user-facing text, such as documentation, a release note, or a product message, as its reader: it describes what they observe, in terms they know.
   A release note says what changed for the user, such as "`sync` no longer deletes files that were never uploaded", not how the code does it now.
 - When the change adds or rewrites the heading or the opening sentence of a section, or you propose one, read them together, then compare them with the whole section.
-  They must convey its main purpose and scope, rather than one use taken from an example.
+  When the change adds or rewrites the first sentence of a rule or a list item, or you propose one, compare it with the text it introduces.
+  In both cases, the introduction must convey the main purpose and scope of what it introduces, rather than one use taken from an example.
 - Flag filler in texts, documents, and comments: text that states the obvious, retells the code, repeats nearby text, or hedges generically.
   Propose deleting it or a tighter replacement.
 - Polish an MR/PR description only when the requester of the review is its author.
@@ -178,6 +183,7 @@ Sort what the review found into these categories:
 - **Polish** — fixes of severity `polish`.
 - **Alternatives** — useful options equivalent to the implemented one or not worth the switch; not micro-style.
 - **Open questions** — assumptions the conclusion rests on and decisions that need confirmation; only what affects the conclusion or further actions.
+  When the answer to a question determines whether the change is needed at all, make resolving it the main conclusion of the review and name the findings and polish that should wait for the answer.
 - **Residual risk** — what remained unchecked or uncertain, and material problems outside the change.
 
 Give each finding its file and line, the concrete harm, and a concrete change rather than general advice.
