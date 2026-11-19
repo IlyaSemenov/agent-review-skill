@@ -109,8 +109,12 @@ The checks below are not exhaustive: when you notice a risk outside them, check 
 - Check each factual claim in new or changed documentation and comments, and in wording you propose, against the contract or code it describes.
   Verify a claim about public behavior by following a public call to the value it returns, not by finding the code meant to produce that value, which another path may bypass.
   Check every case the claim covers, such as each way to reach the same data; when the claim holds only for some of them, it must name its limits.
-- Check whether each documentation addition is needed at all before reviewing its wording.
-  An addition is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
+  When a claim draws a line between correct use and a mistake, test the claim and any wording you propose against one minimal example on each side.
+  For example, to check when a wrapper can finish before the operation it starts, compare a wrapper that returns the operation's promise with one that discards it.
+  Include both examples in a finding about where that line falls.
+- Before reviewing the wording of a documentation addition, or proposing one, check whether it is needed at all.
+  An addition in the change is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
+  Drop an addition of your own, such as a cross-reference, in the same case.
   For example, a README paragraph about an error adds nothing when the command's output already explains the error.
   When fixing an existing sentence would be enough, propose that fix instead of the addition.
 - Normative documentation describes the current state, not its history, and does not duplicate a rule owned elsewhere.
@@ -138,6 +142,8 @@ Check that each addition stands where its reader looks for it, not where it was 
 - User-facing texts must read as natural product wording, rather than code identifiers or literal translations.
 - Read each new or changed user-facing text, such as documentation, a release note, or a product message, as its reader: it describes what they observe, in terms they know.
   A release note says what changed for the user, such as "`sync` no longer deletes files that were never uploaded", not how the code does it now.
+- When the change adds or rewrites the heading or the opening sentence of a section, or you propose one, read them together, then compare them with the whole section.
+  They must convey its main purpose and scope, rather than one use taken from an example.
 - Flag filler in texts, documents, and comments: text that states the obvious, retells the code, repeats nearby text, or hedges generically.
   Propose deleting it or a tighter replacement.
 - Polish an MR/PR description only when the requester of the review is its author.
@@ -190,9 +196,10 @@ Severity is the cost of leaving an issue unfixed.
 - `polish` — a local fix that changes neither behavior nor a contract anything relies on and whose replacement explains itself: wording, minor naming, phrasing of comments and docs, formatting, small consistency fixes.
   Removing a parameter, an export, or a branch without consumers is polish; when a consumer may exist outside the reviewed code, such as a public API, it is a finding.
   If the harm needs explaining, it is a finding.
+  A wording fix is polish only when it keeps what the text covers and claims.
 
 ### Polish
 
 Report all polish you found, even next to `blocker` or `major` findings, except mechanical formatting, such as indentation, spacing, or line wrapping, when the project configures a formatter or a linter.
 Skip polish only in code that a finding proposes to rewrite or delete.
-Merge fixes of the same kind into one.
+Merge polish fixes of the same kind into one, but report a finding separately from polish, even in the same passage.
