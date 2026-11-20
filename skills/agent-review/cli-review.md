@@ -59,6 +59,8 @@ Supply the changes to the review subject:
 - For files in the working tree that Git does not ignore, pass the previous output's `snapshot` value through `--since-snapshot`.
 - For other material, send its changed text or the path where the reviewer can read its current version.
 
+Omit `--since-snapshot` in the round that introduces a new review subject, such as the next commit in a series or an implemented part of a plan.
+
 Write the host response below the response marker line in a new input file, as described in [Review loop](review-loop.md).
 With `--since-snapshot`, the helper gives the reviewer commands that show the working-tree changes since its previous round, when it can compute them; do not paste diffs into the host response.
 

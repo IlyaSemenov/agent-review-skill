@@ -37,7 +37,7 @@ The meta round does not count toward the soft round budget, does not end a stage
 When the review continues afterwards, state above the response marker of the next round that the meta-review is over and the original subject and response contract apply again.
 
 When reviewing via CLI, do not pass `--since-snapshot` to the meta round.
-In the next round, pass `--since-snapshot` with the `snapshot` value of the last round before the meta-review, not of the meta round.
+When continuing the original subject after the meta-review, pass `--since-snapshot` with the `snapshot` value of the last round before the meta-review, not of the meta round.
 
 ## Report
 
