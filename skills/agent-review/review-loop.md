@@ -35,6 +35,11 @@ Reject criticism that is mistaken, overspecified, or based on a wrong assumption
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
 
+When the reviewer raises an issue again after you rejected or partially accepted it, look for what is new in it, such as an argument your rebuttal did not answer or evidence you have not checked.
+Also check whether your rebuttal still holds for the current artifact.
+Reconsider your decision on the merits of what you find; if you keep it, explain in your decision update why the new argument or evidence does not change it.
+When nothing is new and your rebuttal still holds, keep your decision and treat the issue as a repeated disagreement.
+
 When the reviewer's `verification` names a material check you can run, run it or carry it into the final report.
 
 After checking the issues, but before changing the artifact or starting another round, give the user a decision update with one concise line per issue, grouped by decision in this order:
@@ -86,7 +91,7 @@ Accepted: fixed the missing retry.
 Rejected: the proposed lock is redundant.
 ```
 
-Stop when the reviewer approves, no actionable issues remain, the same disagreement repeats after a substantive rebuttal, or `loop_signal` confirms that the discussion is stuck.
+Stop when the reviewer approves, no actionable issues remain apart from repeated disagreements, or `loop_signal` confirms that the discussion is stuck.
 Run another round, even when no other issue remains, after rejecting or partially accepting an issue for the first time, after a fix that departs from the reviewer's recommendation or changes more than the place it names, and after any fix that touches authorization, data, a public contract, or concurrent operations.
 A `polish` fix that words its recommendation differently without changing its meaning does not depart from it.
 Otherwise, when every issue is fixed by applying its recommendation as proposed, stop without another round and report the fixes under **Fixed**.
