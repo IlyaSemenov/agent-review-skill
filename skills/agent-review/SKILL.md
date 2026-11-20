@@ -53,7 +53,8 @@ State the subject and compose the review focus according to [Review focus](revie
 If the subject is a plan that you will implement yourself, also follow [Plan and implementation](plan-and-implementation.md).
 
 For repository changes reviewed via CLI, instruct the reviewer to run the exact diff command rather than pasting a captured diff.
-For a working-tree review, also instruct the reviewer to run `git status --short` and inspect every in-scope untracked file.
+When the reviewer runs a diff command for a working-tree review, also instruct it to run `git status --short` and inspect every in-scope change that the diff command does not show, such as an untracked file or, under `git diff`, a change added to the index.
+Do not name a file for separate inspection when the diff command shows all its in-scope changes, such as a new file added to the index under `git diff HEAD`.
 
 Use path-based input for project files that the reviewer can access.
 Materialize larger non-repository subjects in `/tmp` only when the selected review path can access that file.
