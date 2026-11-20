@@ -141,6 +141,18 @@ If unresolved `open_questions` remain, add an **Open questions** group with one 
 List each unanswered question only in this group, naming the issues that depend on its answer, if any.
 Omit questions already answered during the loop.
 
+### Skill feedback
+
+While the review runs, note problems in this skill's instructions or helper that you run into, such as instructions that conflict, a step that sends or loads the same content twice, a step that costs time without value, or information you have but the review input has no place for.
+Report these problems instead of changing the skill because of them during the review; issues about the reviewed artifact follow the usual flow even when the artifact is this skill.
+
+Add a **Skill feedback** group to the final report for the problems that a change to the skill's instructions or helper would avoid in later reviews.
+Include problems that arise only in a particular situation, such as alongside other installed skills or with a particular project layout or project files.
+
+Write one line per problem: what happened, the situation it depends on, if any, what it cost, and the change that would avoid it.
+Describe the situation in general terms, such as "the project's AGENTS.md sets review rules that conflict with the review method", and leave out the reviewed project's code, paths, and private details, so that the user can pass the group on to the skill's maintainer as is.
+When the review gives several final reports, such as at each stop of a plan's implementation, list each problem only in the first report after you noted it.
+
 ## Review the next subject
 
 When the user asks for another review in the same conversation, such as of the next commit in a series, continue the reviewer conversation of the previous review: send the new subject and its focus as new scope above the response marker.
