@@ -146,6 +146,11 @@ Omit questions already answered during the loop.
 While the review runs, note problems in this skill's instructions or helper that you run into, such as instructions that conflict, a step that sends or loads the same content twice, a step that costs time without value, or information you have but the review input has no place for.
 Report these problems instead of changing the skill because of them during the review; issues about the reviewed artifact follow the usual flow even when the artifact is this skill.
 
+The reviewer reports problems it runs into in `process_feedback`.
+Do not list them in progress updates or judge them as issues.
+When one comes from your own review input, such as material you sent twice, correct your input in later rounds and acknowledge the correction in one line of the host response, with what the reviewer should do differently, if anything; leave the other reported problems unanswered.
+Assess the reviewer's observations alongside your own when preparing the final report.
+
 Add a **Skill feedback** group to the final report for the problems that a change to the skill's instructions or helper would avoid in later reviews.
 Include problems that arise only in a particular situation, such as alongside other installed skills or with a particular project layout or project files.
 

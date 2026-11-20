@@ -19,6 +19,7 @@ function validPayload() {
     loop_signal: false,
     approval_reason: "looks good",
     verification: "read the diff",
+    process_feedback: [],
   }
 }
 
@@ -73,6 +74,7 @@ describe("prompt construction", () => {
     assert.match(prompt, /do not modify files or repository state/)
     assert.match(prompt, /approval_reason:/)
     assert.match(prompt, /verification:/)
+    assert.match(prompt, /- process_feedback: array of strings/)
     assert.doesNotMatch(prompt, /manual_review_token/)
   })
 
@@ -179,6 +181,7 @@ describe("JSON extraction and normalization", () => {
     const payload = {
       ...validPayload(),
       open_questions: [" one ", "", "two"],
+      process_feedback: [" duplicated diff ", ""],
       verification: " Ran bun test: passed. Scrolling not checked. ",
       issues: [
         {
@@ -192,6 +195,7 @@ describe("JSON extraction and normalization", () => {
     }
     const review = normalizeReview(payload)
     assert.deepEqual(review.open_questions, ["one", "two"])
+    assert.deepEqual(review.process_feedback, ["duplicated diff"])
     assert.equal(
       review.verification,
       "Ran bun test: passed. Scrolling not checked.",
@@ -199,6 +203,11 @@ describe("JSON extraction and normalization", () => {
     const [issue] = review.issues
     assert.ok(issue)
     assert.equal(issue.id, "i1")
+    const { process_feedback: _, ...withoutProcessFeedback } = validPayload()
+    assert.deepEqual(
+      normalizeReview(withoutProcessFeedback).process_feedback,
+      [],
+    )
   })
 
   test("rejects malformed review fields", () => {
@@ -218,6 +227,14 @@ describe("JSON extraction and normalization", () => {
     assert.throws(
       () => normalizeReview({ ...validPayload(), verification: ["tests"] }),
       /verification/,
+    )
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), process_feedback: "none" }),
+      /process_feedback/,
+    )
+    assert.throws(
+      () => normalizeReview({ ...validPayload(), process_feedback: null }),
+      /process_feedback/,
     )
     assert.throws(
       () =>

@@ -20,7 +20,8 @@ Above the response marker, put the meta-review request:
   - each improvement proposal is an issue whose severity is the cost of leaving it unfixed for future reviews and whose recommendation names the prompt passage, method section, or review-input practice to change and the change;
   - `approval_reason` explains the verdict and lists what worked and should be kept;
   - `verification` states what the conclusions rest on and what limits them;
-  - `open_questions` holds decisions for the skill's maintainer.
+  - `open_questions` holds decisions for the skill's maintainer;
+  - `process_feedback` stays empty, because this round's issues cover the review process.
 
 Below the response marker, report the decisions, applied changes, and check results the reviewer has not seen yet; leave it empty when there are none.
 

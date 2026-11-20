@@ -106,7 +106,8 @@ The helper prints normalized JSON with this shape:
   "open_questions": [],
   "loop_signal": false,
   "approval_reason": "...",
-  "verification": "..."
+  "verification": "...",
+  "process_feedback": []
 }
 ```
 

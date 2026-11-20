@@ -7,7 +7,7 @@ const ISSUE_KEYS = [
   "rationale",
 ] as const
 
-const OUTPUT_KEYS = [
+const REQUIRED_OUTPUT_KEYS = [
   "verdict",
   "issues",
   "open_questions",
@@ -31,6 +31,7 @@ export type Review = {
   loop_signal: boolean
   approval_reason: string
   verification: string
+  process_feedback: string[]
 }
 
 export class OperationalError extends Error {
@@ -165,6 +166,8 @@ export function buildPrompt(options: {
     "In verification, state the checks you ran, how, and their results, and the residual risk: material behavior you did not verify, each with the check that would verify it.",
     "Put the method's open questions and material problems outside the subject in open_questions, and say when a question needs the user's decision rather than the host's.",
     "Leave out alternatives unless they need a decision; put those in open_questions.",
+    "In process_feedback, report problems in this review's prompts and input that you run into, such as the same material arriving twice or through two routes, instructions that conflict, a path or command that does not work, material you had to guess or look for that the input should have given, or loading other skills or instructions that duplicate the method.",
+    "Name the passage or step and what it cost, report each problem once in this conversation, and leave process_feedback empty otherwise; findings about the subject and preferences do not belong there.",
     "If there are no issues, return an empty issues array.",
   )
   return `${sections.join("\n")}\n`
@@ -209,13 +212,14 @@ function describeSchema(): string {
     "- loop_signal: boolean",
     "- approval_reason: string",
     "- verification: string",
+    "- process_feedback: array of strings",
   ].join("\n")
 }
 
 export function looksLikeReviewPayload(
   value: unknown,
 ): value is Record<string, unknown> {
-  return isRecord(value) && OUTPUT_KEYS.every((key) => key in value)
+  return isRecord(value) && REQUIRED_OUTPUT_KEYS.every((key) => key in value)
 }
 
 export function normalizeReview(payload: unknown): Review {
@@ -271,6 +275,14 @@ export function normalizeReview(payload: unknown): Review {
   if (typeof payload.verification !== "string") {
     throw new Error("verification must be a string")
   }
+  const processFeedback =
+    "process_feedback" in payload ? payload.process_feedback : []
+  if (
+    !Array.isArray(processFeedback) ||
+    !processFeedback.every((item) => typeof item === "string")
+  ) {
+    throw new Error("process_feedback must be a list of strings")
+  }
 
   return {
     verdict: verdict as Review["verdict"],
@@ -281,6 +293,9 @@ export function normalizeReview(payload: unknown): Review {
     loop_signal: payload.loop_signal,
     approval_reason: payload.approval_reason.trim(),
     verification: payload.verification.trim(),
+    process_feedback: processFeedback
+      .map((item) => item.trim())
+      .filter(Boolean),
   }
 }
 

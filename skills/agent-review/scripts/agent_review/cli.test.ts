@@ -13,6 +13,7 @@ function validPayload() {
     loop_signal: false,
     approval_reason: "looks good",
     verification: "read the diff",
+    process_feedback: [],
   }
 }
 

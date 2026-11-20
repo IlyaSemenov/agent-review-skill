@@ -23,6 +23,7 @@ Tell the reviewer that the focus sets priorities and narrows the method only whe
 Tell the reviewer to use the method and the response contract instead of loading other review skills.
 Alongside the review method, keep in the prompt only the reviewer role, the read-only rule, the rule on other review skills, the mapping of the method's results to the response contract, and the response contract.
 Have the reviewer explain the verdict in `approval_reason` and report the checks it ran and its residual risk in `verification`.
+Have the reviewer report problems it runs into in the review's prompts and input in `process_feedback`, each once per conversation, and leave it empty otherwise; accept a response without the field as one with an empty list.
 
 Start every follow-up prompt with the later-round rules, so that host text after them can replace them for one round, as a meta-review does:
 
