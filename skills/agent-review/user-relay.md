@@ -62,6 +62,7 @@ Keep the issue history across that restart.
 
 Continue the same external reviewer conversation.
 Invoke the helper with `--follow-up` and a new input file with the host response below the response marker line.
+For review material you gave in the input itself rather than by path or command, include the changed text in the host response; for material you gave by path or command, name where the change is.
 
 ```text
 === AGENT_REVIEW_RESPONSE ===
