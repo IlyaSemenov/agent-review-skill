@@ -1,7 +1,7 @@
 # Review focus
 
 In round 1, the helper sends the reviewer the [review method](review-method.md).
-The review focus adapts the method to the request and the subject; do not restate the method's criteria.
+The review focus adapts the method to the request and the subject; do not restate the method's criteria or ask the reviewer to read the method, which it already has.
 
 Compose the focus for round 1 and place it in the review input after the subject, under a `Review focus:` heading:
 
