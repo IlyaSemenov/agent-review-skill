@@ -11,6 +11,8 @@ Compose the focus for round 1 and place it in the review input after the subject
   When the solution came from another agent or an earlier review, name that source and present the solution as one candidate, unless the user explicitly chose that solution; agreeing to its cost is not such a choice.
   When you know that the change reverses a decision recorded in the project, name that decision.
 - State as requirements only the decisions the user made that the reviewer cannot learn from the subject or the project, such as an exception to a project convention or a changed plan decision, with the reason when the user gave one.
+- When the user narrowed the task, for example by asking you to fix one regression and leave related defects for separate work, state the outcome the change must achieve and the boundary the user set, in the user's terms rather than as a broader criterion of your own.
+  When the outcome is judged against more than one revision, such as the base of the change and the revision before a regression, state which cases each revision applies to.
 - When the user explicitly narrowed the review, name the parts of the method to apply.
 - Add risks specific to the subject that the method does not name, such as idempotency of a queue consumer.
 - Name areas to check, not your own conclusions about them.
@@ -20,6 +22,7 @@ Compose the focus for round 1 and place it in the review input after the subject
 
 Omit the heading when nothing applies.
 When adding scope in a later round, state its focus only if it differs from round 1.
+When the user narrows the task in a later round, state the new outcome and boundary as for round 1 and name the earlier criteria they replace.
 
 Do not narrow the review yourself in any round: state a check you emphasize, such as behavior equivalence of a refactoring, as a priority rather than as the only check.
 

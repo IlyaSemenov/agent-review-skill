@@ -78,7 +78,7 @@ Send:
 - accepted points with what changed and where;
 - rejected points and why;
 - points left for the user to decide;
-- the user's new decisions stated as requirements;
+- the user's new decisions stated as requirements, and a narrowed task stated as [Review focus](review-focus.md) describes;
 - changes the user asked for outside the reviewer's points, with what changed and where;
 - claims in your changes that remain unverified.
 
