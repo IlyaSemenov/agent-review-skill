@@ -61,11 +61,13 @@ When the answer to an open question determines whether the change is needed at a
 Answer it yourself when the materials you can check settle it; otherwise put the question under **Needs your decision** once, naming the issues that wait for it.
 When the change is needed, judge the waiting issues on their merits; when it is not, list them under **Dropped** with that reason.
 
-After applying a change that adds or rewords a factual claim in documentation or comments, verify the claim before the next round or the final report.
-Check it against the contract or code it describes.
-For a claim about public behavior, run a public call it describes and check every case the claim covers, such as each way to reach the same data; reading the code meant to produce the result is not enough.
-Narrow or remove a claim you cannot verify.
-When such a claim must stay, report it as unverified in the next host response, and under **Not verified** if it stays unverified when the review stops.
+After applying a change that adds or rewords a factual claim in documentation or comments, verify the claim in its final wording before the next round or the final report, whether the wording came from the reviewer's recommendation or from you.
+List the cases the wording covers, such as each way to reach the same data, each outcome of the operation including a failure during cleanup, and a step that has already started.
+For example, changing "may reject with the original error" to "rejects with the original error" requires checking that every failure path the sentence covers preserves that error.
+Check each case against the contract or code it describes; for a claim about public behavior, run a public call it describes, since reading the code meant to produce the result is not enough.
+If the evidence supports only some cases, narrow the claim to those cases.
+Remove a claim you cannot verify.
+When a claim you could not verify must stay, report it as unverified in the next host response, and under **Not verified** if it stays unverified when the review stops.
 
 After applying a change that adds or rewrites the heading or the opening sentence of a section, reread the whole section and check that the heading and opening together convey its main purpose and scope, rather than one use taken from an example.
 
