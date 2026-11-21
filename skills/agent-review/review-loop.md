@@ -31,6 +31,7 @@ Do not number rounds or mention reviewer session ids in user-facing text.
 Treat the reviewer as a peer rather than the final authority.
 Accept useful criticism and update the artifact.
 Reject criticism that is mistaken, overspecified, or based on a wrong assumption.
+Reject an issue when the change neither introduces nor materially worsens the problem and its task does not require solving it; report material problems of this kind under **Outside the change**.
 
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
@@ -137,16 +138,16 @@ Collect every issue across all rounds and deduplicate by `id`.
 Use one concise line per issue and omit empty groups.
 
 - **Fixed** — accepted issues applied to the artifact.
-- **Dropped** — withdrawn, mistaken, or disproven issues that need no change.
+- **Dropped** — withdrawn, mistaken, or disproven issues that need no change, and issues rejected as outside the change that are not material.
+- **Outside the change** — confirmed material problems that the change does not introduce or materially worsen and its task does not require solving, whether the reviewer raised them as issues or in `open_questions`.
 - **Unresolved** — genuine disagreements and unanswered user decisions that remain for the user to judge.
 - **Checked** — material checks that you or the reviewer ran, each with its result and who ran it.
 - **Not verified** — material residual risk from the reviewer's `verification` that neither a later round nor your own checks covered, and claims in your changes that remain unverified.
 
 State why each dropped issue was dismissed, withdrawn, or verified as unfounded.
 
-If unresolved `open_questions` remain, add an **Open questions** group with one line per question.
-List each unanswered question only in this group, naming the issues that depend on its answer, if any.
-Omit questions already answered during the loop.
+For each unanswered question in `open_questions`, add one line under **Open questions** naming any issues that depend on its answer.
+List the question only in this group.
 
 ### Skill feedback
 

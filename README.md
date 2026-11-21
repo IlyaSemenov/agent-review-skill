@@ -126,7 +126,7 @@ Between rounds, the calling agent:
 - stops when the agent approves or when the remaining disagreement is clear enough that another round is not worth it
 - before ending the review of a change to project files that includes more than texts, runs a prose round that checks how the change reads, such as its texts, names, and the order of its tests
 - after each round, reports every issue before investigating or editing, then reports its decision and intended change before applying accepted feedback; when it can judge every issue without investigating, it reports only the decisions
-- at the end, reports back to the user a final summary of all issues raised across rounds, grouped into what was fixed, what was rejected and dropped, and what remains unresolved for the user to judge, along with what the host and the reviewer checked and what remains unverified
+- at the end, reports back to the user a final summary of all issues raised across rounds, grouped into what was fixed, what was rejected and dropped, material problems outside the change, and what remains unresolved for the user to judge, along with what the host and the reviewer checked and what remains unverified
 - at the end, also suggests changes to the skill's instructions or helper that would have avoided problems the review ran into
 
 When the review refers to existing project files, the host points the reviewer at those files directly.
