@@ -54,7 +54,8 @@ If the subject is a plan that you will implement yourself, also follow [Plan and
 
 For repository changes reviewed via CLI, instruct the reviewer to run the exact diff command rather than pasting a captured diff.
 When the reviewer runs a diff command for a working-tree review, also instruct it to run `git status --short` and inspect every in-scope change that the diff command does not show, such as an untracked file or, under `git diff`, a change added to the index.
-Do not name a file for separate inspection when the diff command shows all its in-scope changes, such as a new file added to the index under `git diff HEAD`.
+Leave finding these changes to the reviewer; do not list the files that contain them.
+When the working tree contains changes outside the subject, state the subject's boundary instead, such as its paths.
 
 Use path-based input for project files that the reviewer can access.
 Materialize larger non-repository subjects in `/tmp` only when the selected review path can access that file.
