@@ -38,7 +38,20 @@ Do not number rounds or mention reviewer session ids in user-facing text.
 Treat the reviewer as a peer rather than the final authority.
 Accept useful criticism and update the artifact.
 Reject criticism that is mistaken, overspecified, or based on a wrong assumption.
-Reject an issue when the change neither introduces nor materially worsens the problem and its task does not require solving it; report material problems of this kind under **Outside the change**.
+Reject an issue when the change neither introduces nor materially worsens the problem and its task does not require solving it; report material problems of this kind under **Outside the task**.
+
+Before accepting an issue about a failure, such as an error, a lost value, a wrong result, or a step that does not work, name the use that fails:
+
+- a scenario that the task serves, or a requirement of the task;
+- behavior that worked before the change;
+- an existing or documented use of what the change adds or changes, such as a documented way to call a public interface, a reader's task that a document serves, or a step that a plan relies on.
+
+Reject such an issue when you find no use of these kinds that fails, even when the change introduces the problem and the reviewer reproduces it.
+Such a failure needs, for example, a hypothetical consumer, a shape of input that neither the project nor the task describes, or a combination of features that nobody uses or documents.
+Report a material one under **Outside the task**.
+
+When a reported failure exposes a limit of a guarantee that your earlier fix added, such as a promise in documentation or behavior of the fix, fix the failure for any use of these kinds that needs the guarantee.
+Narrow or remove any part of the guarantee that those uses do not need instead of extending the fix.
 
 Reaching consensus is not required.
 Treat `loop_signal: true` as evidence that another round may be unproductive, not as authority to accept the reviewer's position.
@@ -153,8 +166,8 @@ Collect every issue across all rounds and deduplicate by `id`.
 Use one concise line per issue and omit empty groups.
 
 - **Fixed** — accepted issues applied to the artifact.
-- **Dropped** — withdrawn, mistaken, or disproven issues that need no change, and issues rejected as outside the change that are not material.
-- **Outside the change** — confirmed material problems that the change does not introduce or materially worsen and its task does not require solving, whether the reviewer raised them as issues or in `open_questions`.
+- **Dropped** — withdrawn, mistaken, or disproven issues that need no change, and issues rejected as outside the task that are not material.
+- **Outside the task** — confirmed material problems that the task does not require solving: those the change does not introduce or materially worsen, and those that fail no use named in [Judge each round](#judge-each-round), whether the reviewer raised them as issues or in `open_questions`; state for each whether the change introduces it.
 - **Unresolved** — genuine disagreements and unanswered user decisions that remain for the user to judge.
 - **Checked** — material checks that you or the reviewer ran, each with its result and who ran it.
 - **Not verified** — material residual risk from the reviewer's `verification` that neither a later round nor your own checks covered, and claims in your changes that remain unverified.
