@@ -2,6 +2,13 @@
 
 This document defines the review loop shared by both review paths.
 
+## Keep the subject unchanged during a round
+
+While a round runs, until its reviewer response reaches you, do not change the review subject, such as working-tree files, a plan, or a document.
+Defer changes until the round returns, including changes the user asks for, and tell the user that you will make them then.
+Change the subject during a round only when the user insists.
+When the subject changed during a round anyway, report those changes in the next round as [Prepare another round](#prepare-another-round) describes.
+
 ## Surface feedback before acting
 
 Follow this sequence for every successful reviewer response, including the first round and all resumed rounds:
@@ -81,6 +88,7 @@ Send:
 - points left for the user to decide;
 - the user's new decisions stated as requirements, and a narrowed task stated as [Review focus](review-focus.md) describes;
 - changes the user asked for outside the reviewer's points, with what changed and where;
+- changes made to the subject while the previous round ran, by you or by the user, with what changed and where; when the reviewer read the subject from a source that the change affects, such as a working-tree file or a diff command over it, also mention that it may have seen either version;
 - claims in your changes that remain unverified.
 
 Do not resend the original subject or unchanged instructions.
@@ -96,6 +104,7 @@ Rejected: the proposed lock is redundant.
 
 Stop when the reviewer approves, no actionable issues remain apart from repeated disagreements, or `loop_signal` confirms that the discussion is stuck.
 Run another round, even when no other issue remains, after rejecting or partially accepting an issue for the first time, after a fix that departs from the reviewer's recommendation or changes more than the place it names, and after any fix that touches authorization, data, a public contract, or concurrent operations.
+Also run another round after a change to the subject that the user asked for outside the reviewer's points or that was made while a round ran.
 A `polish` fix that words its recommendation differently without changing its meaning does not depart from it.
 Otherwise, when every issue is fixed by applying its recommendation as proposed, stop without another round and report the fixes under **Fixed**.
 Stopping ends the exchange on the current issues; run the [prose round](#prose-round) before the final report when it applies.

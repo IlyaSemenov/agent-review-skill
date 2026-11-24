@@ -114,6 +114,8 @@ Each invocation:
 - records the working tree, including untracked files that are not ignored, as a tree object in the repository's Git object database when reviewing via CLI in a Git repository, so that a later round can compare the working-tree files under review
 - prints a prompt for the user to relay when reviewing via user relay
 
+While a round runs, the calling agent leaves the review subject unchanged unless you insist on a change, and reports any change made during the round in the next one.
+
 Between rounds, the calling agent:
 
 - inspects the feedback and decides what to accept, what to reject, and what to defend
