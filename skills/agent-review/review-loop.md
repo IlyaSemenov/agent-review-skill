@@ -69,11 +69,16 @@ When the answer to an open question determines whether the change is needed at a
 Answer it yourself when the materials you can check settle it; otherwise put the question under **Needs your decision** once, naming the issues that wait for it.
 When the change is needed, judge the waiting issues on their merits; when it is not, list them under **Dropped** with that reason.
 
+Before adding a qualification, an example, or a reason to a text, whether a recommendation or your own fix proposes it, decide for each affected text by what its readers need and the project's conventions for its kind:
+
+1. Whether the text needs the claim the addition concerns; when it does not, delete the claim, or the part of it the text does not need, instead.
+2. Whether a claim that stays needs the addition; when it does not, leave the addition out.
+
 After applying a change that adds or rewords a factual claim in documentation or comments, verify the claim in its final wording before the next round or the final report, whether the wording came from the reviewer's recommendation or from you.
 List the cases the wording covers, such as each way to reach the same data, each outcome of the operation including a failure during cleanup, and a step that has already started.
 For example, changing "may reject with the original error" to "rejects with the original error" requires checking that every failure path the sentence covers preserves that error.
 Check each case against the contract or code it describes; for a claim about public behavior, run a public call it describes, since reading the code meant to produce the result is not enough.
-If the evidence supports only some cases, narrow the claim to those cases.
+If the evidence supports only some cases, narrow the claim to those cases, or delete it when its text does not need it.
 Remove a claim you cannot verify.
 When a claim you could not verify must stay, report it as unverified in the next host response, and under **Not verified** if it stays unverified when the review stops.
 
