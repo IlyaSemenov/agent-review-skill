@@ -127,13 +127,14 @@ For other changes, run it as a separate round that checks only the items listed 
 
 Above the response marker, list the items to check, without describing any of them as done or correct:
 
-- user-facing texts the change touches, such as documentation, release notes, and product messages;
+- user-facing texts the change touches, such as documentation, release notes, and product messages, each with the document that holds the project's convention for its kind, if any;
 - documentation that describes the changed behavior, even where the change does not touch it;
 - changed comments;
 - new functions and tests;
 - texts you will publish with the change, such as a commit message or an MR/PR description.
 
 Ask the reviewer to apply the method's Documentation, Placement, Naming, and Prose checks to the listed items, and to check the texts published with the change as [Review focus](review-focus.md) describes.
+Ask it to judge each listed text in its final form, as its reader and against the project's convention for its kind, rather than by whether the text took in earlier recommendations.
 
 Ask the reviewer to state in `verification` its conclusion for each listed item, such as "the README paragraph is not needed: the command output already explains the error", not only that it checked the item.
 Tell the reviewer it may group items that need no changes under one conclusion if it names every item in the group.

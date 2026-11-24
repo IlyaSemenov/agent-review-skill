@@ -17,7 +17,8 @@ Compose the focus for round 1 and place it in the review input after the subject
 - Add risks specific to the subject that the method does not name, such as idempotency of a queue consumer.
 - Name areas to check, not your own conclusions about them.
   List changed user-facing texts, such as documentation, release notes, and product messages, among those areas.
-- When you will publish texts with the change that the subject does not contain, such as a commit message, an MR/PR description, or a comment on the issue, draft them before round 1, include them in the review input, and ask the reviewer to check that each is accurate and follows the project's conventions for it, or the style of earlier ones when none are documented.
+  When the project documents conventions for the kind of a changed text, name that document next to the text, such as the changeset guide next to a changed changeset.
+- When you will publish texts with the change that the subject does not contain, such as a commit message, an MR/PR description, or a comment on the issue, draft them before round 1, include each in the review input with the document that holds the project's conventions for it, and ask the reviewer to check that each is accurate and follows those conventions, or the style of earlier ones when none are documented.
   When a later fix changes what such a text describes, update it and send the new text with the next round.
 
 Omit the heading when nothing applies.
