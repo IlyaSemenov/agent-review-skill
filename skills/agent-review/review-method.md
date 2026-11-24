@@ -109,18 +109,23 @@ The checks below are not exhaustive: when you notice a risk outside them, check 
 - If the change alters product behavior, a workflow, a boundary, or a development rule, check the owning document, found through the project's agent instructions rather than by the nearest changed file.
   If the change alters behavior that the user-facing documentation describes, also check it.
   A statement that the change made false is a finding, also in a document the change did not touch, such as a status table row that still describes the old behavior.
+- When the project's conventions govern a kind of text, such as release notes, commit messages, or MR/PR descriptions, check each new or changed text of that kind as a whole against them before checking its claims.
+  Content that the conventions exclude is a finding even when it is true, such as rationale or implementation details in a release note; propose deleting it.
+  In someone else's MR/PR description, report it only within the limits of the Prose checks.
+- Before reviewing the wording of an addition to documentation or another text, such as a paragraph or a clause, or proposing one, check whether it is needed at all.
+  Unless the project's conventions for the text require it, an addition in the change is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
+  Drop an addition of your own, such as a cross-reference, in the same case.
+  For example, a README paragraph about an error adds nothing when the command's output already explains the error.
+  When fixing an existing sentence would be enough, propose that fix instead of the addition.
+  Before proposing to qualify a claim, such as by naming its limits, check in the same way whether its text needs the claim at all; when it does not, propose deleting the claim instead.
+  Decide this for each text where the claim appears: a detail that a guide needs may not belong in a release note.
 - Check each factual claim in new or changed documentation and comments, and in wording you propose, against the contract or code it describes.
   Verify a claim about public behavior by following a public call to the value it returns, not by finding the code meant to produce that value, which another path may bypass.
-  Check every case the claim covers, such as each way to reach the same data; when the claim holds only for some of them, it must name its limits.
+  Check every case the claim covers, such as each way to reach the same data; when the claim holds only for some of them and its text needs the claim, it must name its limits.
   When a claim draws a line between correct use and a mistake, test the claim and any wording you propose against one minimal example on each side.
   For example, to check when a wrapper can finish before the operation it starts, compare a wrapper that returns the operation's promise with one that discards it.
   Include both examples in a finding about where that line falls.
 - When a documented rule is drawn from one case, such as an instruction written after an incident, check that it also works in the common cases within its scope.
-- Before reviewing the wording of a documentation addition, or proposing one, check whether it is needed at all.
-  An addition in the change is a finding when the reader does not need it or already learns it in time from the existing documents or the product's own messages; propose deleting it.
-  Drop an addition of your own, such as a cross-reference, in the same case.
-  For example, a README paragraph about an error adds nothing when the command's output already explains the error.
-  When fixing an existing sentence would be enough, propose that fix instead of the addition.
 - Normative documentation describes the current state, not its history, and does not duplicate a rule owned elsewhere.
 
 #### Placement
