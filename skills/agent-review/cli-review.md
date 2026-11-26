@@ -83,7 +83,7 @@ Keep referenced review files under the review working directory because the help
 ## Timeouts and operational errors
 
 The helper gives the entire round, including a possible JSON-repair retry, a 900-second wall-clock budget by default.
-Use `--timeout-seconds` only when the user explicitly requested a different real review budget.
+Use `--timeout-seconds` only when the user explicitly requested a different time limit for one round.
 
 If a sandboxed launch returns `auth_unavailable`, rerun the same helper command with the required escalation before diagnosing reviewer authentication.
 The first CLI round installs the helper's runtime dependencies below `~/.cache/agent-review`.
